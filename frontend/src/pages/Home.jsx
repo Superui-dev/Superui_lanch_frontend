@@ -152,9 +152,9 @@ const renderPricingNote = (text, highlight) => {
 };
 
 const defaultHero = {
-  badgeText: "VoiceCall Engine Released",
-  headline: "Build Fast With Voice-First Digital Assets",
-  headlineHighlight: "Voice-First",
+  badgeText: "SuperUI 2.0 Engine Released",
+  headline: "Build Fast With Production-Ready Digital Assets",
+  headlineHighlight: "Production-Ready",
   subheadline: "Curated e-books, developer UI kits, and high-converting React templates. Designed for senior engineers, designers, and scaling founders in Telangana, India.",
   ctaPrimaryText: "Explore Products Store",
   ctaSecondaryText: "Customer Sign Up"
