@@ -5,7 +5,8 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
   const { settings, loading } = useSiteSettings();
   const [imgError, setImgError] = useState(false);
 
-  const logoText = settings?.branding?.logoText || 'SuperUI';
+  const rawLogoText = settings?.branding?.logoText;
+  const logoText = (!rawLogoText || rawLogoText === 'VoiceCall') ? 'SuperUI' : rawLogoText;
   const logoUrl = settings?.branding?.logoUrl || '/logo/superui_logo.png';
   const showLogoText = settings?.branding?.showLogoText !== false;
 
@@ -19,8 +20,8 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
   }
 
   return (
-    <div className="flex items-center space-x-2 select-none font-sans">
-      {!imgError ? (
+    <div className="flex items-center space-x-2.5 select-none font-sans">
+      {!imgError && logoUrl ? (
         <img
           src={logoUrl}
           alt="SuperUI Logo"
@@ -28,33 +29,35 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
           onError={() => setImgError(true)}
         />
       ) : (
-        <div className="h-7 w-7 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-extrabold text-xs shadow-md">
-          SUI
+        <div className="relative flex items-center justify-center w-7 h-7">
+          <div className="absolute w-5 h-5 rounded-md bg-orange-400 opacity-60 transform -rotate-12 translate-x-[-2px] translate-y-[-2px]"></div>
+          <div className="absolute w-5 h-5 rounded-md bg-orange-500 opacity-85 transform -rotate-6"></div>
+          <div className="relative w-5 h-5 rounded-md bg-gradient-to-tr from-[#ff3d00] to-[#ff7a00] shadow-sm flex items-center justify-center text-white font-extrabold text-[10px]">
+            S
+          </div>
         </div>
       )}
       {!hideText && showLogoText && (
-        <span className={`font-extrabold tracking-tight text-slate-900 ${textClassName}`}>
+        <span className={`font-extrabold tracking-tight ${textClassName}`}>
           {(() => {
-            if (!logoText) return null;
+            const textToDisplay = (logoText === 'VoiceCall') ? 'SuperUI' : logoText;
             const suffixLen = 2;
-            if (logoText.toLowerCase().endsWith('ui') && logoText.length > suffixLen) {
-              const prefix = logoText.substring(0, logoText.length - suffixLen);
-              const suffix = logoText.substring(logoText.length - suffixLen);
-              const highlightColor = settings?.branding?.logoHighlightColor || '#ff5100';
-              const isDefaultNeon = highlightColor === '#ff5100';
+            if (textToDisplay.toLowerCase().endsWith('ui') && textToDisplay.length >= suffixLen) {
+              const prefix = textToDisplay.substring(0, textToDisplay.length - suffixLen);
+              const suffix = textToDisplay.substring(textToDisplay.length - suffixLen);
               return (
                 <>
-                  {prefix}
+                  <span className="text-slate-900 dark:text-white font-black">{prefix}</span>
                   <span 
-                    className={isDefaultNeon ? 'text-neon-orange font-extrabold' : 'font-extrabold'} 
-                    style={isDefaultNeon ? {} : { color: highlightColor }}
+                    className="font-black text-[#ff5100]" 
+                    style={{ color: '#ff5100' }}
                   >
                     {suffix}
                   </span>
                 </>
               );
             }
-            return logoText;
+            return textToDisplay;
           })()}
         </span>
       )}

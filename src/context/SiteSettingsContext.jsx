@@ -7,7 +7,7 @@ export const SiteSettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({
     branding: {
       logoUrl: '',
-      logoText: 'VoiceCall',
+      logoText: 'SuperUI',
       showLogo: true,
       showLogoText: true,
       location: 'Telangana, India'
