@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /india/admin/
-Disallow: /api/
-
-Sitemap: https://superui.in/sitemap.xml
