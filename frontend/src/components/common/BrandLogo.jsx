@@ -6,8 +6,8 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
   const [imgError, setImgError] = useState(false);
 
   const rawLogoText = settings?.branding?.logoText;
-  const logoText = (!rawLogoText || rawLogoText === 'VoiceCall') ? 'SuperUI' : rawLogoText;
-  const logoUrl = settings?.branding?.logoUrl || '/logo/superui_logo.png';
+  const logoText = (!rawLogoText || rawLogoText === 'SuperUI') ? 'SuperUI' : rawLogoText;
+ const logoUrl ='/logo/superui_logo.png' ||'https://i.postimg.cc/0jCtQC9v/superui-logo.png' || settings?.branding?.logoUrl;
   const showLogoText = settings?.branding?.showLogoText !== false;
 
   if (loading) {
@@ -40,7 +40,7 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
       {!hideText && showLogoText && (
         <span className={`font-extrabold tracking-tight ${textClassName}`}>
           {(() => {
-            const textToDisplay = (logoText === 'VoiceCall') ? 'SuperUI' : logoText;
+            const textToDisplay = (logoText === 'Call') ? 'SuperUI' : logoText;
             const suffixLen = 2;
             if (textToDisplay.toLowerCase().endsWith('ui') && textToDisplay.length >= suffixLen) {
               const prefix = textToDisplay.substring(0, textToDisplay.length - suffixLen);
