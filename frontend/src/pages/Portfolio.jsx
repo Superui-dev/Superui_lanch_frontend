@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import LivePreviewModal from '../components/common/LivePreviewModal';
 import { Eye, Heart, ArrowRight, Zap, BookOpen, Monitor, Palette, Sparkles, ExternalLink, X, Menu, ShoppingCart } from 'lucide-react';
 
@@ -12,6 +13,7 @@ const Portfolio = () => {
   const [previewProduct, setPreviewProduct] = useState(null);
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const { addToCart } = useCart();
+  const { user, openAuthModal } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,6 +58,10 @@ const Portfolio = () => {
   };
 
   const handleBuyNow = (product) => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
     addToCart({
       _id: product._id,
       name: product.name,

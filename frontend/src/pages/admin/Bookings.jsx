@@ -288,7 +288,7 @@ const Bookings = () => {
                     <tr key={booking._id} className={`${isLight ? 'hover:bg-neutral-50/60' : 'hover:bg-neutral-900/20'} transition-colors`}>
                       <td className="py-4 px-5">
                         <div className="flex flex-col">
-                          <span className="font-bold text-neutral-900 dark:text-white text-xs">{booking.name}</span>
+                          <span className="font-bold text-neutral-900 text-xs">{booking.name}</span>
                           {booking.instagramId && <span className="text-[10px] text-neutral-400">@{booking.instagramId}</span>}
                         </div>
                       </td>

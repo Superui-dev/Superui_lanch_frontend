@@ -206,12 +206,12 @@ const Payments = () => {
                     return (
                       <tr key={p._id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors duration-150">
                         <td className="py-4 px-6">
-                          <p className="font-mono font-semibold text-neutral-900 dark:text-white">{p.transactionId || p.paymentId || 'N/A'}</p>
+                          <p className="font-mono font-semibold text-neutral-900">{p.transactionId || p.paymentId || 'N/A'}</p>
                           <p className="text-[10px] text-neutral-400 font-sans">{p.customerName || 'Customer'} ({p.customerEmail || 'N/A'})</p>
                         </td>
                         <td className="py-4 px-6 font-mono text-neutral-600 dark:text-slate-400">{p.orderNumber || p.orderId?.orderNumber || 'N/A'}</td>
                         <td className="py-4 px-6 text-neutral-700 dark:text-slate-300 font-medium">{p.paymentMethod || p.method || 'Razorpay/UPI'}</td>
-                        <td className="py-4 px-6 font-semibold text-neutral-900 dark:text-white">INR {typeof p.amount === 'number' ? p.amount.toLocaleString() : p.amount}</td>
+                        <td className="py-4 px-6 font-semibold text-neutral-900">INR {typeof p.amount === 'number' ? p.amount.toLocaleString() : p.amount}</td>
                         <td className="py-4 px-6 font-mono text-[10px] text-neutral-400 max-w-[140px] truncate" title={p.signature}>{p.signature || 'Verified Signature'}</td>
                         <td className="py-4 px-6 text-right">
                           <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold border ${

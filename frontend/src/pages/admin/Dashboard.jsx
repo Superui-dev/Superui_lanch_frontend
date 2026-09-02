@@ -230,20 +230,33 @@ const Dashboard = () => {
 
   const yTicks = [60000, 50000, 40000, 30000, 20000, 10000, 0];
 
-  return (
-    <AdminLayout>
-      <div className="p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto text-neutral-900">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className={`text-2xl font-bold ${colors.text}`}>Dashboard Overview</h1>
-            <p className={`text-xs ${colors.textMuted} mt-1`}>
-              Showing real-time database orders, revenue metrics, and system report analytics for {selectedDate}
-            </p>
-          </div>
-        </header>
+   return (
+     <AdminLayout>
+       <div className="p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto text-neutral-900">
+         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+           <div>
+             <h1 className={`text-2xl font-bold ${colors.text}`}>Dashboard Overview</h1>
+             <p className={`text-xs ${colors.textMuted} mt-1`}>
+               Showing real-time database orders, revenue metrics, and system report analytics for {selectedDate}
+             </p>
+           </div>
+         </header>
 
-        {/* Top 4 Summary Stat Cards */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+         {loadingDashboard ? (
+           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+             {[0,1,2,3].map((i) => (
+               <div key={i} className={`p-6 rounded-2xl border ${colors.cardBg} ${colors.cardBorder} space-y-4 animate-pulse`}>
+                 <div className="flex justify-between items-center">
+                   <div className={`h-3 w-24 rounded ${isLight ? 'bg-neutral-200' : 'bg-neutral-800'}`}></div>
+                   <div className={`h-8 w-8 rounded-xl ${isLight ? 'bg-neutral-200' : 'bg-neutral-800'}`}></div>
+                 </div>
+                 <div className={`h-8 w-32 rounded ${isLight ? 'bg-neutral-200' : 'bg-neutral-800'}`}></div>
+                 <div className={`h-3 w-28 rounded ${isLight ? 'bg-neutral-200' : 'bg-neutral-800'}`}></div>
+               </div>
+             ))}
+           </section>
+         ) : (
+           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { label: 'Total Sales', value: `INR ${stats.totalSales.toLocaleString()}`, icon: LineChart, trend: '↑ Real-time DB Sync', trendColor: 'text-emerald-600' },
             { label: 'Total Orders', value: stats.totalOrders.toString(), icon: ShoppingCart, trend: '↑ Real-time DB Sync', trendColor: 'text-emerald-600' },
@@ -273,6 +286,7 @@ const Dashboard = () => {
             </div>
           ))}
         </section>
+        )}
 
         {/* MAIN REPORT CARDS SECTION (Sales Overview + Recent Orders Table) */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -418,13 +432,13 @@ const Dashboard = () => {
                   ) : (
                     paginatedOrders.map((order, idx) => (
                       <tr key={order._id || idx} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/40 transition-colors">
-                        <td className="py-3 px-3 text-xs font-bold text-neutral-900 dark:text-white whitespace-nowrap">
+                        <td className="py-3 px-3 text-xs font-bold text-neutral-900 whitespace-nowrap">
                           #{order.orderNumber || `ORD-${10032 - idx}`}
                         </td>
                         <td className="py-3 px-3 text-xs font-semibold text-neutral-800 dark:text-neutral-200 whitespace-nowrap max-w-[120px] truncate">
                           {order.customerName || order.userId?.name || 'Customer'}
                         </td>
-                        <td className="py-3 px-3 text-xs font-bold text-neutral-900 dark:text-white whitespace-nowrap">
+                        <td className="py-3 px-3 text-xs font-bold text-neutral-900 whitespace-nowrap">
                           INR {(order.totalAmount || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-3 text-xs whitespace-nowrap">

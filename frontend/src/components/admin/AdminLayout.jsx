@@ -303,7 +303,7 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className={`h-screen flex ${colors.bg}`}>
+    <div className={`admin-layout h-screen flex ${colors.bg}`}>
       <InspectDetector />
       {/* Desktop Sidebar */}
       <aside className={`hidden lg:flex flex-col shrink-0 transition-all duration-300 border-r ${colors.sidebar} ${sidebarCollapsed ? 'w-16' : 'w-52'}`}>
@@ -716,7 +716,7 @@ const AdminLayout = ({ children }) => {
                             <QrCode className="h-8 w-8" />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-neutral-900 dark:text-white">QR Code Hidden</p>
+                            <p className="text-xs font-semibold text-neutral-900">QR Code Hidden</p>
                             <p className="text-[10px] text-neutral-500 dark:text-slate-400 mt-0.5">Protected by Security Policy</p>
                           </div>
                           <button
@@ -793,7 +793,7 @@ const AdminLayout = ({ children }) => {
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
-                      className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 rounded-xl px-4 py-3 text-center text-lg font-mono tracking-[0.5em] outline-none focus:border-brand-500 text-neutral-900 dark:text-white"
+                      className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-4 py-3 text-center text-lg font-mono tracking-[0.5em] outline-none focus:border-brand-500 text-neutral-900"
                     />
                   </div>
 

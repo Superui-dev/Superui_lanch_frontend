@@ -125,7 +125,7 @@ const Reports = () => {
             {/* All Products Table */}
             <section className={`${colors.cardBg} border ${colors.cardBorder} rounded-2xl overflow-hidden shadow-sm`}>
               <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-neutral-900 dark:text-white">All Products Performance</h2>
+                <h2 className="text-base font-semibold text-neutral-900">All Products Performance</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
@@ -146,9 +146,9 @@ const Reports = () => {
                             {(currentPage - 1) * itemsPerPage + idx + 1}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-bold text-neutral-900 dark:text-white truncate max-w-xs">{product.name}</td>
+                        <td className="py-4 px-6 font-bold text-neutral-900 truncate max-w-xs">{product.name}</td>
                         <td className="py-4 px-6 capitalize">{product.category}</td>
-                        <td className="py-4 px-6 font-semibold text-neutral-900 dark:text-white">{(product.totalOrders || 0).toLocaleString()} units</td>
+                        <td className="py-4 px-6 font-semibold text-neutral-900">{(product.totalOrders || 0).toLocaleString()} units</td>
                         <td className="py-4 px-6 font-semibold text-brand-500">INR {(product.revenue || 0).toLocaleString()}</td>
                       </tr>
                     ))}

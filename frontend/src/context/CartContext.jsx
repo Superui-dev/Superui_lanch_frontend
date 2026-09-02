@@ -12,7 +12,7 @@ const getStableUserKey = (user) => {
 };
 
 export const CartProvider = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   const storageKey = getStableUserKey(user);
 
   // Lazy initial state so cart items load synchronously from localStorage on page refresh/mount
@@ -123,18 +123,21 @@ export const CartProvider = ({ children }) => {
     const exists = cartItems.find((item) => item._id === product._id || item.productId === product._id);
     if (exists) return;
 
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      return;
+    }
+
     const updated = [...cartItems, { ...product, quantity: 1 }];
     saveCart(updated);
 
-    if (isAuthenticated) {
-      try {
-        await client.post('/api/cart', {
-          productId: product._id || product.productId,
-          quantity: 1
-        }, { silent: true });
-      } catch (e) {
-        console.warn('Backend cart sync failed:', e);
-      }
+    try {
+      await client.post('/api/cart', {
+        productId: product._id || product.productId,
+        quantity: 1
+      }, { silent: true });
+    } catch (e) {
+      console.warn('Backend cart sync failed:', e);
     }
   };
 

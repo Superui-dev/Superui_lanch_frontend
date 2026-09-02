@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { X, Mail, Lock, User, Phone, Sparkles, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X, Mail, Lock, LogIn } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 
 const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { customerLogin, customerRegister } = useAuth();
+  const { customerLogin } = useAuth();
 
   if (!isOpen) return null;
 
@@ -23,17 +19,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     setLoading(true);
 
     try {
-      if (mode === 'signup') {
-        if (!name || !email || !phone || !password) {
-          throw new Error('Please fill in all required fields (Name, Email, Cell Number, Password).');
-        }
-        await customerRegister({ name, email, phone, password });
-      } else {
-        if (!email || !password) {
-          throw new Error('Please enter your email and password.');
-        }
-        await customerLogin(email, password);
+      if (!email || !password) {
+        throw new Error('Please enter your email and password.');
       }
+      await customerLogin(email, password);
       onClose();
     } catch (err) {
       setError(err.message || 'Authentication failed. Please try again.');
@@ -66,35 +55,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
             <BrandLogo className="h-7 w-7 object-contain" hideText />
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-            {mode === 'signup' ? 'Create Customer Account' : 'Welcome to SuperUI'}
+            Welcome to SuperUI
           </h2>
           <p className="text-[11px] sm:text-xs text-white/95 font-medium mt-1 drop-shadow-sm">
             Access premium templates, e-books, and instant order downloads
           </p>
-        </div>
-
-        {/* Tab Toggle */}
-        <div className="flex border-b border-neutral-200/80 bg-neutral-50/50 p-1.5 shrink-0">
-          <button
-            onClick={() => { setMode('login'); setError(''); }}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-              mode === 'login'
-                ? 'bg-white text-neutral-900 shadow-sm'
-                : 'text-neutral-500 hover:text-neutral-900'
-            }`}
-          >
-            Customer Sign In
-          </button>
-          <button
-            onClick={() => { setMode('signup'); setError(''); }}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
-              mode === 'signup'
-                ? 'bg-white text-neutral-900 shadow-sm'
-                : 'text-neutral-500 hover:text-neutral-900'
-            }`}
-          >
-            Create Account
-          </button>
         </div>
 
         {/* Body Form */}
@@ -106,54 +71,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
             </div>
           )}
 
-          <div className="relative flex items-center justify-center my-1">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200" />
-            </div>
-            <span className="relative bg-white px-3 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-              Customer Login
-            </span>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-3.5">
-            {mode === 'signup' && (
-              <>
-                <div>
-                  <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                    <input
-                      type="text"
-                      required
-                      placeholder="Jane Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1">
-                    Cell / Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-neutral-300 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-colors"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
             <div>
               <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-1">
                 Email Address <span className="text-red-500">*</span>
@@ -195,21 +113,9 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
               className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-neutral-900 hover:bg-brand-600 text-white text-xs font-bold shadow-lg transition-all hover:shadow-brand-500/20 disabled:opacity-50 mt-2"
             >
               <LogIn className="h-4 w-4" />
-              <span>{loading ? 'Processing...' : mode === 'signup' ? 'Create Customer Account' : 'Sign In To Account'}</span>
+              <span>{loading ? 'Processing...' : 'Sign In To Account'}</span>
             </button>
           </form>
-
-          {/* Quick Admin Portal Switch Link */}
-          <div className="pt-2 border-t border-neutral-100 text-center">
-            <Link
-              to="/india/admin/login"
-              onClick={onClose}
-              className="text-[11px] font-semibold text-neutral-500 hover:text-brand-600 transition-colors inline-flex items-center gap-1"
-            >
-              <ShieldCheck className="h-3.5 w-3.5 text-neutral-400" />
-              <span>Are you an Administrator? Sign in to Admin Portal →</span>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

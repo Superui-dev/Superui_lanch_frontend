@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BrandLogo from '../components/common/BrandLogo';
-import { LogIn, KeyRound, Mail, Sparkles } from 'lucide-react';
+import { LogIn, KeyRound, Mail } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -25,19 +25,6 @@ const Login = () => {
       navigate(redirectPath, { replace: true });
     } catch (err) {
       setError('Invalid credentials');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAdminDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await login('hello.superui@gmail.com', 'admin_pass_123', true);
-      navigate('/india/admin/dashboard', { replace: true });
-    } catch (err) {
-      setError('Admin demo login failed');
     } finally {
       setLoading(false);
     }
@@ -102,22 +89,6 @@ const Login = () => {
               <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
             </button>
           </form>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-brand-900"></div>
-            <span className="flex-shrink mx-4 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">sandbox demo controls</span>
-            <div className="flex-grow border-t border-brand-900"></div>
-          </div>
-
-          {/* Quick Admin Access */}
-          <button
-            onClick={handleAdminDemoLogin}
-            disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-brand-950 border border-brand-850 hover:bg-brand-900/60 hover:text-white transition text-xs font-bold text-brand-300"
-          >
-            <Sparkles className="h-4 w-4 text-brand-400" />
-            <span>Login as Administrator</span>
-          </button>
         </div>
       </div>
     </div>

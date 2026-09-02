@@ -17,6 +17,13 @@
   }
 }
 
+@media (forced-colors: active) {
+  .admin-layout,
+  .admin-layout * {
+    forced-color-adjust: none;
+  }
+}
+
 /* Magic UI style animations */
 @keyframes shimmer {
   0% { background-position: -200% 0; }

@@ -542,7 +542,7 @@ const Home = () => {
             {/* Outer Glow */}
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-500/20 via-orange-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
             
-            <div className="relative flex items-center bg-[#F7F7F8] dark:bg-neutral-900 rounded-full border border-neutral-200/90 dark:border-neutral-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
+            <div className="relative flex items-center bg-white dark:bg-neutral-800 rounded-full border border-neutral-200/90 dark:border-neutral-700 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
               <input
                 type="text"
                 value={searchQuery}

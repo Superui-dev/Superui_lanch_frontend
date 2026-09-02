@@ -20,7 +20,7 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
   }
 
   return (
-    <div className="flex items-center space-x-2.5 select-none font-sans">
+    <div className="flex items-center space-x-1.5 select-none font-sans">
       {!imgError && logoUrl ? (
         <img
           src={logoUrl}

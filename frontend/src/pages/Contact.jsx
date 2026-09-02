@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import client from '../api/client';
 import { 
   Mail, MessageSquare, Send, Sparkles, ShieldCheck, Zap, 
-  Copy, Check, Clock, PhoneCall, HelpCircle, ChevronDown, ChevronUp, Globe 
+  Copy, Check, Clock, PhoneCall, HelpCircle, ChevronDown, ChevronUp, Globe, Instagram
 } from 'lucide-react';
 
 const contactFaqs = [
@@ -128,28 +128,28 @@ const Contact = () => {
                 </a>
               </div>
 
-              {/* Contact Method 2: Telegram */}
+              {/* Contact Method 2: Instagram */}
               <div className="p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-sm hover:border-neutral-300 transition-all space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-sky-50 text-sky-600">
-                      <MessageSquare className="h-5 w-5" />
+                    <div className="p-3 rounded-xl bg-pink-50 text-pink-600">
+                      <Instagram className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-neutral-900">Telegram Bot & Help</h4>
-                      <p className="text-xs text-neutral-400 font-medium">Live Instant Automated Support</p>
+                      <h4 className="text-sm font-bold text-neutral-900">Instagram</h4>
+                      <p className="text-xs text-neutral-400 font-medium">Follow & Message Directly</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-md bg-sky-100 text-sky-700 text-[10px] font-bold">LIVE</span>
+                  <span className="px-2.5 py-1 rounded-md bg-pink-100 text-pink-700 text-[10px] font-bold">FOLLOW</span>
                 </div>
 
                 <a
-                  href="https://t.me/SuperUI_Bot"
+                  href="https://instagram.com/superui.in"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-sm transition-all"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold shadow-sm transition-all"
                 >
-                  <span>Open @SuperUI_Bot</span>
+                  <span>@superui.in</span>
                   <Globe className="h-3.5 w-3.5" />
                 </a>
               </div>
@@ -277,16 +277,16 @@ const Contact = () => {
                       </div>
                     </div>
 
-                    {/* Phone (Optional) */}
+                    {/* Instagram Handle (Optional) */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-2">
-                        Phone / Telegram Handle (Optional)
+                        Instagram Handle (Optional)
                       </label>
                       <input
                         type="text"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+91 98765 43210 or @telegram_username"
+                        placeholder="@superui.in"
                         className="w-full rounded-2xl border border-neutral-200 bg-neutral-50/60 px-4 py-3.5 text-xs text-neutral-900 font-medium placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500 shadow-sm transition-all"
                       />
                     </div>

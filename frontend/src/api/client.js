@@ -10,6 +10,7 @@ const client = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
 });
 
 // Request Interceptor: Attach Supabase JWT to Authorization header

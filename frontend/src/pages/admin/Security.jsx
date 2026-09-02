@@ -120,7 +120,7 @@ const Security = () => {
                 ) : (
                   paginatedLogs.map((log) => (
                     <tr key={log._id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors duration-150">
-                      <td className="py-4 px-6 font-medium text-neutral-900 dark:text-white">{log.adminUser}</td>
+                      <td className="py-4 px-6 font-medium text-neutral-900">{log.adminUser}</td>
                       <td className="py-4 px-6 font-mono font-semibold text-brand-600 text-[10px]">{log.action}</td>
                       <td className="py-4 px-6 font-medium capitalize text-neutral-700 dark:text-slate-300">{log.resource}</td>
                       <td className="py-4 px-6 text-neutral-600 dark:text-slate-400 font-mono text-[11px]">{log.ip}</td>

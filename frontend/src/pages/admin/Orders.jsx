@@ -118,7 +118,7 @@ const Orders = () => {
                     const isPending = ['PENDING'].includes(ord.paymentStatus?.toUpperCase());
                     return (
                       <tr key={ord._id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors duration-150">
-                        <td className="py-4 px-6 font-mono font-semibold text-neutral-900 dark:text-white">{ord.orderNumber}</td>
+                        <td className="py-4 px-6 font-mono font-semibold text-neutral-900">{ord.orderNumber}</td>
 
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-2">

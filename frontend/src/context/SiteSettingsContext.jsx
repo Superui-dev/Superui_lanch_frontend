@@ -136,8 +136,8 @@ services: [
     const fetchSettings = async () => {
       try {
         const [settingsRes, servicesRes] = await Promise.allSettled([
-          client.get('/api/public/settings', { silent: true }),
-          client.get('/api/public/services', { silent: true })
+          client.get('/api/public/settings', { silent: true, timeout: 5000 }),
+          client.get('/api/public/services', { silent: true, timeout: 5000 })
         ]);
 
         let updated = {};

@@ -173,7 +173,7 @@ const Downloads = () => {
                 ) : (
                   paginatedTokens.map((t) => (
                     <tr key={t._id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors duration-150">
-                      <td className="py-4 px-6 font-medium text-neutral-900 dark:text-white">{t.productName}</td>
+                      <td className="py-4 px-6 font-medium text-neutral-900">{t.productName}</td>
                       <td className="py-4 px-6 font-mono text-neutral-600 dark:text-slate-400 text-[10px]">{t.tokenValue}</td>
 
                       <td className="py-4 px-6">

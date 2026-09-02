@@ -7,7 +7,7 @@ const WatchlistContext = createContext(null);
 export const WatchlistProvider = ({ children }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, openAuthModal } = useAuth();
 
   const fetchWatchlist = async () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -57,6 +57,10 @@ export const WatchlistProvider = ({ children }) => {
   }, [isAuthenticated, user?._id]);
 
   const addToWatchlist = async (productId) => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      return;
+    }
     try {
       const res = await client.post(`/api/wishlist/add/${productId}`);
       if (res.data?.success && res.data?.data) {
@@ -83,6 +87,10 @@ export const WatchlistProvider = ({ children }) => {
   };
 
   const toggleWatchlist = async (productId) => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      return;
+    }
     if (isInWatchlist(productId)) {
       await removeFromWatchlist(productId);
     } else {
