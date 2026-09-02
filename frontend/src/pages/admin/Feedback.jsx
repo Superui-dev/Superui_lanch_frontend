@@ -65,7 +65,7 @@ const AdminFeedback = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 p-4 sm:p-8 max-w-[1700px] mx-auto">
+      <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto">
         
         {/* Top Header Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-neutral-200 shadow-sm">

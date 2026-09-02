@@ -247,22 +247,37 @@ const Home = () => {
           client.get('/api/public/testimonials', { silent: true })
         ]);
 
-        if (productsRes.status === 'fulfilled' && productsRes.value?.data?.success) {
-          const list = productsRes.value.data.data?.products || productsRes.value.data.data;
-          if (Array.isArray(list)) {
-            setProducts(list);
+        const handleProducts = (res) => {
+          if (res?.data?.success) {
+            const list = res.data.data?.products || res.data.data;
+            if (Array.isArray(list) && list.length > 0) {
+              setProducts(list);
+              return true;
+            }
           }
+          return false;
+        };
+
+        if (!handleProducts(productsRes.status === 'fulfilled' ? productsRes.value : null)) {
+          setTimeout(async () => {
+            try {
+              const retryRes = await client.get('/api/public/products?limit=20', { silent: true });
+              handleProducts(retryRes);
+            } catch (e) {
+              // Quiet retry
+            }
+          }, 2000);
         }
 
         if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data?.success && Array.isArray(categoriesRes.value.data.data)) {
           setCategories(categoriesRes.value.data.data);
         }
 
-        if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value?.data?.success && Array.isArray(testimonialsRes.value.data.data) && testimonialsRes.value.data.data.length > 0) {
+        if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value?.data?.success && Array.isArray(testimonialsRes.value.data.data)) {
           setDynamicTestimonials(testimonialsRes.value.data.data);
         }
       } catch (err) {
-        console.warn('DB Products fetch warning:', err);
+        console.warn('Home data fetch failed:', err);
       } finally {
         setLoading(false);
       }
@@ -377,7 +392,7 @@ const Home = () => {
         {/* Pro Balanced Ambient Aurora Glow */}
         <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-[69vw] h-[38vw] max-w-[1000px] max-h-[550px] bg-gradient-to-r from-brand-500/22 via-orange-500/18 to-purple-600/18 blur-[140px] rounded-full animate-aurora pointer-events-none z-0" />
 
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12 text-center relative z-10">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
 
           {/* Badge Pill */}
           {heroData.badgeText && (
@@ -515,7 +530,7 @@ const Home = () => {
 
       {/* REAL DB PRODUCT CARDS GRID SECTION */}
       <section className="py-12 sm:py-16">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Header Row */}
           <div className="flex flex-row items-center justify-between mb-8 gap-4 flex-wrap">
@@ -542,13 +557,13 @@ const Home = () => {
             {/* Outer Glow */}
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-500/20 via-orange-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
             
-            <div className="relative flex items-center bg-white dark:bg-neutral-800 rounded-full border border-neutral-200/90 dark:border-neutral-700 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
+            <div className="relative flex items-center bg-white rounded-full border border-neutral-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="What type of design are you interested in?"
-                className="w-full bg-transparent text-sm sm:text-base font-medium text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none pr-4"
+                className="w-full bg-transparent text-sm sm:text-base font-medium text-neutral-800 placeholder:text-neutral-400 focus:outline-none pr-4"
               />
               
               <div className="flex items-center space-x-2 shrink-0">
@@ -785,7 +800,7 @@ const Home = () => {
 
       {/* SERVICES WE OFFER SECTION (Matching user pattern same-to-same) */}
       <section className="py-20 bg-white border-t border-neutral-200/80">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-8">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
           
           <div className="space-y-3 w-[90%] mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">

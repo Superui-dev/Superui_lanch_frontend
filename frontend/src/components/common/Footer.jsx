@@ -33,7 +33,7 @@ const Footer = () => {
       {/* Subtle top accent gradient */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
 
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {/* Top Columns */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-0 min-[568px]:pb-5 sm:pb-12 border-b border-neutral-100">

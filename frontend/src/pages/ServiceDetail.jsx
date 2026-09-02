@@ -79,7 +79,7 @@ const ServiceDetail = () => {
     <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 pb-24">
       {/* Breadcrumb Header */}
       <div className="bg-white border-b border-neutral-200/80 py-3.5 px-4 sm:px-8">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] flex items-center gap-2 text-xs font-semibold text-neutral-500">
+        <div className="mx-auto w-full max-w-7xl flex items-center gap-2 text-xs font-semibold text-neutral-500">
           <Link to="/" className="hover:text-brand-600 transition-colors">Home</Link>
           <span>/</span>
           <Link to="/services" className="hover:text-brand-600 transition-colors">Services</Link>
@@ -92,7 +92,7 @@ const ServiceDetail = () => {
       <section className="relative py-16 sm:py-20 bg-white border-b border-neutral-200/80 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90vw] h-[45vw] max-w-[900px] max-h-[450px] bg-gradient-to-r from-brand-500/18 via-orange-400/15 to-purple-600/15 blur-[140px] rounded-full pointer-events-none" />
         
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-6 relative z-10">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-xs font-bold shadow-sm animate-fade-in">
             <Cpu className="h-3.5 w-3.5" />
             <span>Dedicated Service Capabilities</span>
@@ -130,7 +130,7 @@ const ServiceDetail = () => {
       </section>
 
       {/* Main Content Layout */}
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 pt-12 space-y-16">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 space-y-16">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           

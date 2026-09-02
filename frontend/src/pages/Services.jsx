@@ -43,7 +43,7 @@ const Services = () => {
       <section className="relative py-16 sm:py-24 bg-white border-b border-neutral-200/80 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] max-w-[800px] max-h-[400px] bg-gradient-to-r from-brand-500/15 via-orange-400/10 to-purple-500/15 blur-[120px] rounded-full pointer-events-none" />
         
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-6 relative z-10">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-xs font-bold shadow-sm animate-fade-in">
             <Sparkles className="h-3.5 w-3.5" />
             <span>DB4 Dynamic Services Engine</span>
@@ -80,7 +80,7 @@ const Services = () => {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 pt-12 space-y-12">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 space-y-12">
         
         {/* Toggleable JSON View Section */}
         {showJsonView && (
@@ -114,7 +114,7 @@ const Services = () => {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-[340px] rounded-3xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                <div key={i} className="h-[340px] rounded-3xl bg-neutral-200 animate-pulse" />
               ))}
             </div>
           ) : services.length === 0 ? (
