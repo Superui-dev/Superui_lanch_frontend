@@ -114,7 +114,7 @@ const Services = () => {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-[340px] rounded-3xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                <div key={i} className="h-[340px] rounded-3xl bg-neutral-200 animate-pulse" />
               ))}
             </div>
           ) : services.length === 0 ? (
