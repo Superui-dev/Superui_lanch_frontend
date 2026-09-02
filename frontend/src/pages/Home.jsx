@@ -392,7 +392,7 @@ const Home = () => {
         {/* Pro Balanced Ambient Aurora Glow */}
         <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-[69vw] h-[38vw] max-w-[1000px] max-h-[550px] bg-gradient-to-r from-brand-500/22 via-orange-500/18 to-purple-600/18 blur-[140px] rounded-full animate-aurora pointer-events-none z-0" />
 
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12 text-center relative z-10">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
 
           {/* Badge Pill */}
           {heroData.badgeText && (
@@ -530,7 +530,7 @@ const Home = () => {
 
       {/* REAL DB PRODUCT CARDS GRID SECTION */}
       <section className="py-12 sm:py-16">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Header Row */}
           <div className="flex flex-row items-center justify-between mb-8 gap-4 flex-wrap">
@@ -800,7 +800,7 @@ const Home = () => {
 
       {/* SERVICES WE OFFER SECTION (Matching user pattern same-to-same) */}
       <section className="py-20 bg-white border-t border-neutral-200/80">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-8">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
           
           <div className="space-y-3 w-[90%] mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">

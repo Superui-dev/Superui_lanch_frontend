@@ -67,7 +67,7 @@ const Contact = () => {
         <div className="absolute inset-0 bg-hero-grid pointer-events-none opacity-40 z-0" />
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] max-w-[800px] max-h-[400px] bg-gradient-to-r from-orange-500/15 via-brand-500/20 to-purple-500/15 blur-[140px] rounded-full pointer-events-none z-0" />
 
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12 text-center relative z-10 space-y-4">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-4">
           
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-xs font-bold shadow-sm">
             <Zap className="h-3.5 w-3.5" />
@@ -86,7 +86,7 @@ const Contact = () => {
 
       {/* MAIN TWO COLUMN CONTACT SECTION */}
       <section className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 sm:gap-16 items-start">
             
             {/* LEFT COLUMN: CONTACT CARDS & FAQS */}

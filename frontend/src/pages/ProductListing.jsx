@@ -338,7 +338,7 @@ const ProductListing = () => {
 
       {/* Store Products Grid */}
       <section className="py-12">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-3">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-600" />
