@@ -65,7 +65,7 @@ const Contact = () => {
         
         {/* Subtle Background Radial Grid */}
         <div className="absolute inset-0 bg-hero-grid pointer-events-none opacity-40 z-0" />
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-orange-500/15 via-brand-500/20 to-purple-500/15 blur-[140px] rounded-full pointer-events-none z-0" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] max-w-[800px] max-h-[400px] bg-gradient-to-r from-orange-500/15 via-brand-500/20 to-purple-500/15 blur-[140px] rounded-full pointer-events-none z-0" />
 
         <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12 text-center relative z-10 space-y-4">
           

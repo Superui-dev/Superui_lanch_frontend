@@ -44,18 +44,18 @@ const BrandLogo = ({ className = 'h-7 w-auto', textClassName = 'text-xl', hideTe
             const suffixLen = 2;
             if (textToDisplay.toLowerCase().endsWith('ui') && textToDisplay.length >= suffixLen) {
               const prefix = textToDisplay.substring(0, textToDisplay.length - suffixLen);
-              const suffix = textToDisplay.substring(textToDisplay.length - suffixLen);
-              return (
-                <>
-                  <span className="text-slate-900 dark:text-white font-black">{prefix}</span>
-                  <span 
-                    className="font-black text-[#ff5100]" 
-                    style={{ color: '#ff5100' }}
-                  >
-                    {suffix}
-                  </span>
-                </>
-              );
+               const suffix = textToDisplay.substring(textToDisplay.length - suffixLen);
+               return (
+                 <>
+                   <span className="font-black" style={{ color: '#000000' }}>{prefix}</span>
+                   <span 
+                     className="font-black" 
+                     style={{ color: '#ff5100' }}
+                   >
+                     {suffix}
+                   </span>
+                 </>
+               );
             }
             return textToDisplay;
           })()}

@@ -60,7 +60,7 @@ const AdminLogin = () => {
     <div className="h-screen bg-neutral-0 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <InspectDetector />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-500/5 via-neutral-0 to-neutral-0 pointer-events-none"></div>
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-brand-500/10 via-secondary-500/5 to-brand-500/10 blur-[100px] pointer-events-none animate-gradient"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] max-w-[800px] max-h-[400px] bg-gradient-to-r from-brand-500/10 via-secondary-500/5 to-brand-500/10 blur-[100px] pointer-events-none animate-gradient"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-[420px] relative z-10">
         <div className="text-center space-y-6 mb-10">

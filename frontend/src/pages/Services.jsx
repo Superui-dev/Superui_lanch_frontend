@@ -41,7 +41,7 @@ const Services = () => {
     <div className="min-h-screen bg-[#FAFAFA] text-neutral-900 pb-20">
       {/* Hero Section */}
       <section className="relative py-16 sm:py-24 bg-white border-b border-neutral-200/80 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-brand-500/15 via-orange-400/10 to-purple-500/15 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] max-w-[800px] max-h-[400px] bg-gradient-to-r from-brand-500/15 via-orange-400/10 to-purple-500/15 blur-[120px] rounded-full pointer-events-none" />
         
         <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-xs font-bold shadow-sm animate-fade-in">

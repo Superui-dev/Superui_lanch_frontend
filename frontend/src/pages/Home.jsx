@@ -350,21 +350,21 @@ const Home = () => {
         <div className="absolute inset-0 bg-hero-grid pointer-events-none opacity-45 z-0" />
 
         {/* Precision Thin & Light Concentric Circle Rings & Orbiting Pulse Nodes */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1450px] h-[1450px] pointer-events-none z-0 flex items-center justify-center select-none opacity-60">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[90vw] max-w-[1450px] max-h-[1450px] pointer-events-none z-0 flex items-center justify-center select-none opacity-60">
           {/* Outer Ring 1 (Ultra thin & light) */}
-          <div className="absolute w-[1350px] h-[1350px] rounded-full border border-neutral-200/40 animate-spin-slow" style={{ animationDuration: '45s' }} />
+          <div className="absolute w-[88vw] h-[88vw] max-w-[1350px] max-h-[1350px] rounded-full border border-neutral-200/40 animate-spin-slow" style={{ animationDuration: '45s' }} />
           
           {/* Orbit Ring 2 with Light Dashed Border & Subtle Nodes */}
-          <div className="absolute w-[1020px] h-[1020px] rounded-full border border-dashed border-brand-500/15 animate-spin-slow flex items-center justify-between p-1" style={{ animationDuration: '32s', animationDirection: 'reverse' }}>
+          <div className="absolute w-[70vw] h-[70vw] max-w-[1020px] max-h-[1020px] rounded-full border border-dashed border-brand-500/15 animate-spin-slow flex items-center justify-between p-1" style={{ animationDuration: '32s', animationDirection: 'reverse' }}>
             <div className="h-2 w-2 rounded-full bg-brand-500/70 shadow-[0_0_8px_rgba(255,81,0,0.4)] animate-orbit-pulse -ml-1" />
             <div className="h-2 w-2 rounded-full bg-orange-400/70 shadow-[0_0_8px_rgba(255,81,0,0.4)] animate-orbit-pulse -mr-1" />
           </div>
           
           {/* Ring 3 (Ultra Light Solid Line) */}
-          <div className="absolute w-[740px] h-[740px] rounded-full border border-neutral-200/50 animate-pulse-glow" />
+          <div className="absolute w-[51vw] h-[51vw] max-w-[740px] max-h-[740px] rounded-full border border-neutral-200/50 animate-pulse-glow" />
 
           {/* Ring 4 (Inner Dashed Circle with Light Pulse Dots) */}
-          <div className="absolute w-[480px] h-[480px] rounded-full border border-dashed border-orange-400/20 animate-spin-slow flex flex-col justify-between items-center p-1" style={{ animationDuration: '20s' }}>
+          <div className="absolute w-[33vw] h-[33vw] max-w-[480px] max-h-[480px] rounded-full border border-dashed border-orange-400/20 animate-spin-slow flex flex-col justify-between items-center p-1" style={{ animationDuration: '20s' }}>
             <div className="h-1.5 w-1.5 rounded-full bg-orange-400/60 shadow-[0_0_6px_rgba(255,81,0,0.3)] animate-orbit-pulse -mt-0.75" />
             <div className="h-1.5 w-1.5 rounded-full bg-brand-500/60 shadow-[0_0_6px_rgba(255,81,0,0.3)] animate-orbit-pulse -mb-0.75" />
           </div>
@@ -375,7 +375,7 @@ const Home = () => {
         </div>
 
         {/* Pro Balanced Ambient Aurora Glow */}
-        <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-gradient-to-r from-brand-500/22 via-orange-500/18 to-purple-600/18 blur-[140px] rounded-full animate-aurora pointer-events-none z-0" />
+        <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-[69vw] h-[38vw] max-w-[1000px] max-h-[550px] bg-gradient-to-r from-brand-500/22 via-orange-500/18 to-purple-600/18 blur-[140px] rounded-full animate-aurora pointer-events-none z-0" />
 
         <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12 text-center relative z-10">
 
@@ -465,12 +465,12 @@ const Home = () => {
 
           {/* Hero Widescreen Showcase Container with Spinning Halo Ring */}
 <div className="mt-12 sm:mt-5 relative max-w-[1550px] w-full mx-auto px-2 sm:px-4">
-            {/* Spinning Gradient Halo Ring */}
-            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[850px] h-[550px] bg-gradient-to-r from-brand-500/30 via-orange-400/25 to-sky-400/30 blur-[130px] rounded-full animate-spin-slow pointer-events-none z-0" />
-            
-            <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full h-52 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA]/90 to-transparent blur-2xl pointer-events-none z-20" />
-            <div className="absolute -bottom-14 left-1/4 w-[550px] h-48 bg-orange-400/30 blur-3xl rounded-full pointer-events-none z-0 animate-smoke-1" />
-            <div className="absolute -bottom-14 right-1/4 w-[550px] h-48 bg-sky-300/30 blur-3xl rounded-full pointer-events-none z-0 animate-smoke-2" />
+          {/* Spinning Gradient Halo Ring */}
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[59vw] h-[38vw] max-w-[850px] max-h-[550px] bg-gradient-to-r from-brand-500/30 via-orange-400/25 to-sky-400/30 blur-[130px] rounded-full animate-spin-slow pointer-events-none z-0" />
+          
+          <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full h-52 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA]/90 to-transparent blur-2xl pointer-events-none z-20" />
+          <div className="absolute -bottom-14 left-1/4 w-[38vw] h-[32vw] max-w-[550px] max-h-[48vw] bg-orange-400/30 blur-3xl rounded-full pointer-events-none z-0 animate-smoke-1" />
+          <div className="absolute -bottom-14 right-1/4 w-[38vw] h-[32vw] max-w-[550px] max-h-[48vw] bg-sky-300/30 blur-3xl rounded-full pointer-events-none z-0 animate-smoke-2" />
 
             <div className="relative z-10 rounded-2xl sm:rounded-3xl p-1 bg-white border border-neutral-200/90 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.12)] overflow-hidden transition-all duration-500 hover:scale-[1.002]">
               <img
