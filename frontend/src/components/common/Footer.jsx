@@ -120,7 +120,7 @@ const Footer = () => {
         </div>
 
         {/* Copyright Bar */}
-        <div className="pt-3 sm:pt-8 flex  flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 gap-4 hidden min-[568px]:block">
+        <div className="pt-3 sm:pt-8 flex flex-row min-[568px]:flex-col items-center justify-between text-xs text-neutral-500 gap-4 hidden min-[568px]:block">
           <p className="font-medium">{copyright}</p>
           <div className="flex items-center space-x-1 font-medium">
             <span>Designed & Built with</span>
