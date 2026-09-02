@@ -43,8 +43,15 @@ const OrderPurchaseNotifier = () => {
     // Connect to the public/root namespace of the Socket.io server
     const socket = io(SOCKET_URL, {
       transports: ['polling', 'websocket'],
-      reconnectionAttempts: 5,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000,
       autoConnect: true
+    });
+
+    socket.on('connect', () => {
+      // Successfully connected to public storefront socket
     });
 
     socket.on('connect_error', () => {
@@ -60,6 +67,7 @@ const OrderPurchaseNotifier = () => {
     });
 
     return () => {
+      socket.off('storefront:new-order');
       socket.disconnect();
     };
   }, []);

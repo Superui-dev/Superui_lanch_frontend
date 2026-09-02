@@ -21,6 +21,11 @@ const Categories = () => {
   // Form Fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState('');
+  const [color, setColor] = useState('#6B7280');
+  const [productType, setProductType] = useState('website-template');
+  const [parentId, setParentId] = useState('');
+  const [visible, setVisible] = useState(true);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -48,6 +53,11 @@ const Categories = () => {
     setEditingId(null);
     setName('');
     setDescription('');
+    setIcon('');
+    setColor('#6B7280');
+    setProductType('website-template');
+    setParentId('');
+    setVisible(true);
     setIsModalOpen(true);
   };
 
@@ -56,34 +66,50 @@ const Categories = () => {
     setEditingId(cat._id);
     setName(cat.name);
     setDescription(cat.description || '');
+    setIcon(cat.icon || '');
+    setColor(cat.color || '#6B7280');
+    setProductType(cat.productType || 'website-template');
+    setParentId(cat.parentId || '');
+    setVisible(cat.visible !== false);
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
     try {
       if (modalMode === 'create') {
         await client.post('/api/admin/categories', {
           name,
-          slug,
           description,
-          visible: true
+          icon,
+          color,
+          productType,
+          parentId: parentId || null,
+          visible
         });
       } else {
         if (editingId && !editingId.startsWith('cat-')) {
           await client.put(`/api/admin/categories/${editingId}`, {
             name,
-            slug,
-            description
+            description,
+            icon,
+            color,
+            productType,
+            parentId: parentId || null,
+            visible
           });
         }
       }
       setIsModalOpen(false);
       setName('');
       setDescription('');
+      setIcon('');
+      setColor('#6B7280');
+      setProductType('website-template');
+      setParentId('');
+      setVisible(true);
       await fetchCategories();
     } catch (err) {
       alert(`Failed to ${modalMode} category: ` + (err.response?.data?.message || err.message));
@@ -173,6 +199,13 @@ const Categories = () => {
                       </p>
                     </div>
                   </div>
+
+                  <div className={`pt-3 border-t ${colors.border} text-xs ${colors.textSecondary} flex items-center justify-between`}>
+                    <span>Products created in this category</span>
+                    <span className={`px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 ${colors.text} font-bold`}>
+                      {cat.productCount ?? 0}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -205,7 +238,7 @@ const Categories = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
-                <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Category Name</label>
+                <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Category Name *</label>
                 <input
                   type="text"
                   required
@@ -219,13 +252,86 @@ const Categories = () => {
               <div>
                 <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Description</label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Explain what technologies go here..."
                   className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} placeholder:text-neutral-400 focus:outline-none ${colors.inputFocus} transition-all duration-200 resize-none`}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Icon URL</label>
+                  <input
+                    type="text"
+                    value={icon}
+                    onChange={(e) => setIcon(e.target.value)}
+                    placeholder="https://..."
+                    className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} placeholder:text-neutral-400 focus:outline-none ${colors.inputFocus} transition-all duration-200`}
+                  />
+                </div>
+                <div>
+                  <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Brand Color</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="h-9 w-12 rounded border cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className={`flex-1 ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} font-mono text-[10px]`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Product Type</label>
+                <select
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value)}
+                  className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} focus:outline-none ${colors.inputFocus} transition-all duration-200`}
+                >
+                  <option value="ui-component">UI Component</option>
+                  <option value="website-template">Website Template</option>
+                  <option value="portfolio">Portfolio</option>
+                  <option value="ebook">eBook</option>
+                  <option value="source-code">Source Code</option>
+                  <option value="free-resource">Free Resource</option>
+                  <option value="blog">Blog</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Parent Category (subcategory of)</label>
+                <select
+                  value={parentId}
+                  onChange={(e) => setParentId(e.target.value)}
+                  className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} focus:outline-none ${colors.inputFocus} transition-all duration-200`}
+                >
+                  <option value="">— None (root category) —</option>
+                  {categories
+                    .filter(c => modalMode === 'create' || c._id !== editingId)
+                    .map(c => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                    ))}
+                </select>
+              </div>
+
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={visible}
+                  onChange={(e) => setVisible(e.target.checked)}
+                  className="h-4 w-4 rounded border-neutral-300"
+                />
+                <span className={`text-xs ${colors.text}`}>Visible on storefront</span>
+              </label>
 
               <button
                 type="submit"

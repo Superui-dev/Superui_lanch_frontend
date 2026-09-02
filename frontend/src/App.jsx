@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { SiteSettingsProvider } from './context/SiteSettingsContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WatchlistProvider } from './context/WatchlistContext';
 import AppRouter from './routes/AppRouter';
 import OrderPurchaseNotifier from './components/common/OrderPurchaseNotifier';
 import ScrollToTop from './components/common/ScrollToTop';
+import BookingCallModal from './components/common/BookingCallModal';
 
 import ErrorBoundary from './components/common/ErrorBoundary';
 
@@ -22,6 +23,7 @@ function App() {
             <CartProvider>
               <WatchlistProvider>
                 <AppRouter />
+                <BookingCallModalWrapper />
                 <OrderPurchaseNotifier />
               </WatchlistProvider>
             </CartProvider>
@@ -30,6 +32,11 @@ function App() {
       </BrowserRouter>
     </ErrorBoundary>
   );
+}
+
+function BookingCallModalWrapper() {
+  const { isBookModalOpen, closeBookingModal, bookModalServiceName } = useAuth();
+  return <BookingCallModal isOpen={isBookModalOpen} onClose={closeBookingModal} serviceName={bookModalServiceName} />;
 }
 
 export default App;

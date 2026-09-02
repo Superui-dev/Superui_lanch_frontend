@@ -17,6 +17,8 @@ import OrderConfirmation from '../pages/OrderConfirmation';
 import Download from '../pages/Download';
 import Contact from '../pages/Contact';
 import Login from '../pages/Login';
+import Services from '../pages/Services';
+import ServiceDetail from '../pages/ServiceDetail';
 
 // User account pages
 import Orders from '../pages/Account/Orders';
@@ -88,6 +90,8 @@ import IssuesAdmin from '../pages/admin/Issues';
 import PricingAdmin from '../pages/admin/Pricing';
 import VisitorsAdmin from '../pages/admin/Visitors';
 import PagesAdmin from '../pages/admin/Pages';
+import TestimonialsAdmin from '../pages/admin/TestimonialsAdmin';
+import PageConfigPanel from '../pages/admin/PageConfigPanel';
 
 // Public Storefront Layout Wrapper
 const StorefrontLayout = ({ children }) => {
@@ -116,6 +120,8 @@ const AppRouter = () => {
       <Route path="/order/confirmation/:id" element={<StorefrontLayout><OrderConfirmation /></StorefrontLayout>} />
       <Route path="/download/:token" element={<StorefrontLayout><Download /></StorefrontLayout>} />
       <Route path="/contact" element={<StorefrontLayout><Contact /></StorefrontLayout>} />
+      <Route path="/services" element={<StorefrontLayout><Services /></StorefrontLayout>} />
+      <Route path="/services/:slug" element={<StorefrontLayout><ServiceDetail /></StorefrontLayout>} />
       <Route path="/login" element={<StorefrontLayout><Login /></StorefrontLayout>} />
       
       {/* Protected Customer Routes */}
@@ -367,6 +373,26 @@ const AppRouter = () => {
           <AdminDateProvider>
             <AdminThemeProvider>
             <PagesAdmin />
+          </AdminThemeProvider>
+          </AdminDateProvider>
+        </AdminProtectedRoute>
+      } />
+
+      <Route path="/india/admin/testimonials" element={
+        <AdminProtectedRoute>
+          <AdminDateProvider>
+            <AdminThemeProvider>
+            <TestimonialsAdmin />
+          </AdminThemeProvider>
+          </AdminDateProvider>
+        </AdminProtectedRoute>
+      } />
+
+      <Route path="/india/admin/page-config" element={
+        <AdminProtectedRoute>
+          <AdminDateProvider>
+            <AdminThemeProvider>
+            <PageConfigPanel />
           </AdminThemeProvider>
           </AdminDateProvider>
         </AdminProtectedRoute>

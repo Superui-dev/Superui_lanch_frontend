@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { X, Mail, Lock, User, Phone, Sparkles, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import BrandLogo from './BrandLogo';
 
 const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
@@ -45,22 +46,29 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-neutral-950/70 backdrop-blur-md overflow-y-auto min-h-screen">
       <div className="relative w-full max-w-md max-h-[90vh] flex flex-col my-auto bg-white border border-neutral-200/90 rounded-3xl shadow-2xl overflow-hidden text-neutral-900 animate-fade-in">
         
-        {/* Header decoration */}
-        <div className="bg-gradient-to-r from-brand-600 via-orange-500 to-amber-500 p-5 sm:p-6 text-white text-center relative shrink-0">
+        {/* Header decoration with animated multi-color neon orange gradient */}
+        <div className="bg-gradient-to-r from-[#ff5100] via-[#ff7700] via-[#ff3d00] via-[#ff0055] to-[#ff6b00] bg-[length:200%_200%] animate-gradient p-5 sm:p-6 text-white text-center relative shrink-0 overflow-hidden shadow-inner">
+          {/* Subtle background glow element */}
+          <div className="absolute -top-12 -left-12 w-28 h-28 rounded-full bg-white/10 blur-xl pointer-events-none" />
+          <div className="absolute -bottom-12 -right-12 w-28 h-28 rounded-full bg-amber-400/20 blur-xl pointer-events-none" />
+
+          {/* High-visibility Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
+            aria-label="Close modal"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/25 hover:bg-white text-white hover:text-neutral-900 shadow-md backdrop-blur-md border border-white/40 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer z-10"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 stroke-[2.5]" />
           </button>
           
-          <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-white/20 backdrop-blur-md mb-2">
-            <Sparkles className="h-5 w-5 text-white" />
+          {/* Logo with White Rounded Background */}
+          <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-white shadow-lg border border-white/50 mb-3.5 hover:scale-105 transition-transform duration-200">
+            <BrandLogo className="h-7 w-7 object-contain" hideText />
           </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
             {mode === 'signup' ? 'Create Customer Account' : 'Welcome to SuperUI'}
           </h2>
-          <p className="text-[11px] sm:text-xs text-white/80 mt-1">
+          <p className="text-[11px] sm:text-xs text-white/95 font-medium mt-1 drop-shadow-sm">
             Access premium templates, e-books, and instant order downloads
           </p>
         </div>

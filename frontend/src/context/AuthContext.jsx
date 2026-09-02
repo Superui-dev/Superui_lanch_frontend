@@ -39,6 +39,19 @@ export const AuthProvider = ({ children }) => {
     setIsAuthModalOpen(false);
   };
 
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [bookModalServiceName, setBookModalServiceName] = useState('');
+
+  const openBookingModal = (serviceName = '') => {
+    setBookModalServiceName(serviceName);
+    setIsBookModalOpen(true);
+  };
+
+  const closeBookingModal = () => {
+    setIsBookModalOpen(false);
+    setBookModalServiceName('');
+  };
+
   const supabase = createClient();
 
   // Check existing session on boot
@@ -484,6 +497,10 @@ export const AuthProvider = ({ children }) => {
       authModalMode,
       openAuthModal,
       closeAuthModal,
+      isBookModalOpen,
+      openBookingModal,
+      closeBookingModal,
+      bookModalServiceName,
       customerLogin,
       customerRegister,
       loginWithGoogle,

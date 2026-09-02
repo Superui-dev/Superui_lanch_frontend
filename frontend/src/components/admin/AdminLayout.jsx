@@ -138,7 +138,8 @@ const AdminLayout = ({ children }) => {
   }, [supabase]);
 
   useEffect(() => {
-    let token = socketToken;
+    const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
+    let token = mfaToken || socketToken;
     if (!token) {
       const sessionStr = localStorage.getItem('supabase.auth.token') || 
                          localStorage.getItem('sb-token') || 
@@ -153,24 +154,30 @@ const AdminLayout = ({ children }) => {
       }
     }
     if (!token) {
-      token = 'demo-admin-token';
+      return;
     }
 
-    const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
-
     const socket = io(`${SOCKET_URL}/admin`, {
-      auth: { token, mfaToken },
+      auth: { token, mfaToken: mfaToken || token },
       transports: ['polling', 'websocket'],
-      reconnectionAttempts: 3,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000,
       autoConnect: true
     });
 
-    socket.on('connect_error', () => {
-      // Suppress unhandled socket reconnect errors in console
+    socket.on('connect', () => {
+      console.log('[Admin WS] Connected');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn(`[Admin WS] Connection notice: ${err.message}`);
     });
 
     socket.on('admin:visitor-live-count', (data) => {
-      if (data?.count !== undefined) setLiveVisitors(data.count);
+      const count = data?.count ?? data?.liveAdmins;
+      if (count !== undefined) setLiveVisitors(count);
     });
 
     socket.on('admin:system-health', (data) => {
@@ -191,6 +198,11 @@ const AdminLayout = ({ children }) => {
     });
 
     return () => {
+      socket.off('admin:visitor-live-count');
+      socket.off('admin:system-health');
+      socket.off('admin:new-order');
+      socket.off('admin:new-contact');
+      socket.off('admin:payment-failed');
       socket.disconnect();
     };
   }, [socketToken]);
@@ -247,19 +259,17 @@ const AdminLayout = ({ children }) => {
   const topNavLinks = [
     { label: 'Messages', path: '/india/admin/contacts', icon: Mail },
     { label: 'Telegram', path: '/india/admin/telegram', icon: Bell },
-    { label: 'Settings', path: '/india/admin/settings', icon: Settings },
   ];
 
   const additionalPages = [
-    { label: 'Hero Images', path: '/india/admin/hero-images', icon: Image },
+    { label: 'Settings', path: '/india/admin/settings', icon: Settings },
+    { label: 'Testimonials', path: '/india/admin/testimonials', icon: Heart },
+    { label: 'Page Config (JSON)', path: '/india/admin/page-config', icon: Grid },
     { label: 'Feedback', path: '/india/admin/feedback', icon: Heart },
     { label: 'Issues', path: '/india/admin/issues', icon: LifeBuoy },
     { label: 'Pricing Plan', path: '/india/admin/pricing', icon: CreditCard },
     { label: 'Visitor Report', path: '/india/admin/visitors', icon: Users },
-    { label: 'Booking Calls', path: '/india/admin/bookings', icon: Phone },
-    { label: 'Services', path: '/india/admin/services', icon: Grid },
-    { label: 'Navbar Menu', path: '/india/admin/navbar', icon: Type },
-    { label: 'Page Content', path: '/india/admin/pages', icon: Grid }
+    { label: 'Booking Calls', path: '/india/admin/bookings', icon: Phone }
   ];
 
   const isActive = (path) => location.pathname === path;

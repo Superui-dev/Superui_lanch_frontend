@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  ArrowRight, Check, Zap, Sparkles, Shield, Heart, Eye, 
-  ShoppingCart, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Star, BookOpen, Search,
+import {
+  ArrowRight, Check, Zap, Sparkles, Shield, Heart, Eye,
+  ShoppingCart, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Star, BookOpen,
   Monitor, Palette, Twitter, Github, Globe, Mail, Clock, Download, CheckCircle2,
-  TrendingUp, Headphones, X, Loader2, Phone, ExternalLink
+  TrendingUp, Headphones, X, Phone, Search, Bot, Brain, Cpu, Wand2
 } from 'lucide-react';
 import client, { API_BASE_URL } from '../api/client';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useCart } from '../context/CartContext';
 import { useSiteSettings } from '../context/SiteSettingsContext';
 import { useAuth } from '../context/AuthContext';
-import BrandLogo from '../components/common/BrandLogo';
 import LivePreviewModal from '../components/common/LivePreviewModal';
 
 const categoryMeta = {
   'templates': { icon: Palette, color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
-  'ui-kits': { icon: Sparkles, color: 'bg-orange-500/10 text-orange-600 border-orange-200' }
+  'ui-kits': { icon: Cpu, color: 'bg-orange-500/10 text-orange-600 border-orange-200' },
+  'ai-kits': { icon: Bot, color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200' },
+  'ai-tools': { icon: Brain, color: 'bg-blue-500/10 text-blue-600 border-blue-200' }
 };
 
 const popularTags = [
@@ -182,159 +183,11 @@ const Home = () => {
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
+  const [dynamicTestimonials, setDynamicTestimonials] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const [openFaq, setOpenFaq] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
-
-  // Cal.com Call Booking Wizard States
-  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-  const [bookingStep, setBookingStep] = useState('calendar'); // 'calendar' | 'form' | 'success'
-  const [selectedBookDate, setSelectedBookDate] = useState('');
-  const [selectedBookTime, setSelectedBookTime] = useState('');
-  const [bookName, setBookName] = useState('');
-  const [bookEmail, setBookEmail] = useState('');
-  const [bookInstagramId, setBookInstagramId] = useState('');
-  const [previewInstagramId, setPreviewInstagramId] = useState('');
-  const autoAdvancedRef = useRef(false);
-  const fetchedSlotsRef = useRef(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPreviewInstagramId(bookInstagramId);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [bookInstagramId]);
-
-  const [bookPhone, setBookPhone] = useState('');
-  const [bookMessage, setBookMessage] = useState('');
-  const [bookingSubmitLoading, setBookingSubmitLoading] = useState(false);
-  const [bookedSlots, setBookedSlots] = useState([]);
-
-  const fetchBookedSlots = async () => {
-    try {
-      const res = await client.get('/api/public/booked-slots', { silent: true });
-      if (res.data?.success && Array.isArray(res.data.data)) {
-        setBookedSlots(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch booked slots:', err);
-    }
-  };
-
-  const getInitialBookingMonthAndYear = () => {
-    const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    if (today.getDate() >= daysInMonth) {
-      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      return { month: nextMonth.getMonth(), year: nextMonth.getFullYear() };
-    }
-    return { month: today.getMonth(), year: today.getFullYear() };
-  };
-
-  const initialDateData = getInitialBookingMonthAndYear();
-  const [bookMonth, setBookMonth] = useState(initialDateData.month);
-  const [bookYear, setBookYear] = useState(initialDateData.year);
-
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
-  const timeSlots = [
-    '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-    '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM',
-    '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM'
-  ];
-
-  const handlePrevMonth = () => {
-    const initialData = getInitialBookingMonthAndYear();
-    if (bookYear === initialData.year && bookMonth === initialData.month) return;
-    if (bookMonth === 0) {
-      setBookMonth(11);
-      setBookYear(bookYear - 1);
-    } else {
-      setBookMonth(bookMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (bookMonth === 11) {
-      setBookMonth(0);
-      setBookYear(bookYear + 1);
-    } else {
-      setBookMonth(bookMonth + 1);
-    }
-  };
-
-  const getCleanInstagramUsername = (input) => {
-    if (!input) return '';
-    let clean = input.trim();
-    clean = clean.replace(/^@/, '');
-    try {
-      if (clean.includes('instagram.com/')) {
-        const parts = clean.split('instagram.com/');
-        if (parts[1]) {
-          clean = parts[1].split('/')[0].split('?')[0];
-        }
-      }
-    } catch (e) {}
-    return clean.trim();
-  };
-
-  const openBookingModal = (serviceName = '') => {
-    setIsBookModalOpen(true);
-    setBookingStep('calendar');
-    setSelectedBookDate('');
-    setSelectedBookTime('');
-    setBookName('');
-    setBookEmail('');
-    setBookInstagramId('');
-    setPreviewInstagramId('');
-    setBookPhone('');
-    setBookMessage(serviceName ? `I'm interested in your "${String(serviceName)}" service.` : '');
-    autoAdvancedRef.current = false;
-    const initialData = getInitialBookingMonthAndYear();
-    setBookMonth(initialData.month);
-    setBookYear(initialData.year);
-    fetchBookedSlots();
-  };
-
-  const isFullyBooked = (dateStr) => {
-    const slotsBookedForDate = bookedSlots.filter(b => b.date === dateStr).map(b => b.time);
-    return timeSlots.every(slot => slotsBookedForDate.includes(slot));
-  };
-
-  const hasAvailableSlots = (dateStr) => {
-    const slotsBookedForDate = bookedSlots.filter(b => b.date === dateStr).map(b => b.time);
-    return timeSlots.some(slot => !slotsBookedForDate.includes(slot));
-  };
-
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    if (!bookName || !bookEmail) {
-      alert('Please enter your name and email.');
-      return;
-    }
-    setBookingSubmitLoading(true);
-    try {
-      await client.post('/api/public/book-call', {
-        name: bookName,
-        email: bookEmail,
-        instagramId: getCleanInstagramUsername(bookInstagramId),
-        phone: bookPhone,
-        date: selectedBookDate,
-        time: selectedBookTime,
-        message: bookMessage
-      });
-      setBookingStep('success');
-    } catch (err) {
-      alert('Booking failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setBookingSubmitLoading(false);
-    }
-  };
 
   const categoryScrollRef = useRef(null);
 
@@ -348,7 +201,7 @@ const Home = () => {
   const services = (siteSettings?.services && Array.isArray(siteSettings.services))
     ? siteSettings.services.filter(s => s.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
     : [];
-  const { openAuthModal, user } = useAuth();
+  const { openAuthModal, user, openBookingModal } = useAuth();
 
   const handleAddToCart = (product) => {
     if (!user) {
@@ -369,63 +222,7 @@ const Home = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategoryTab, searchQuery, sortBy]);
-
-  useEffect(() => {
-    if (!isBookModalOpen) {
-      fetchedSlotsRef.current = false;
-      return;
-    }
-    if (autoAdvancedRef.current) return;
-
-    const checkAndAdvance = async () => {
-      let slots = bookedSlots;
-      if (!fetchedSlotsRef.current && slots.length === 0) {
-        fetchedSlotsRef.current = true;
-        try {
-          const res = await client.get('/api/public/booked-slots', { silent: true });
-          if (res.data?.success && Array.isArray(res.data.data)) {
-            slots = res.data.data;
-            setBookedSlots(slots);
-          } else {
-            return;
-          }
-        } catch (err) {
-          return;
-        }
-      }
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const daysInMonth = new Date(bookYear, bookMonth + 1, 0).getDate();
-
-      let startDay = 1;
-      if (bookYear === today.getFullYear() && bookMonth === today.getMonth()) {
-        startDay = today.getDate() + 1;
-      }
-
-      let hasAvailable = false;
-      for (let d = startDay; d <= daysInMonth; d++) {
-        const dateStr = `${bookYear}-${String(bookMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        if (hasAvailableSlots(dateStr)) {
-          hasAvailable = true;
-          break;
-        }
-      }
-
-      if (!hasAvailable) {
-        autoAdvancedRef.current = true;
-        if (bookMonth === 11) {
-          setBookMonth(0);
-          setBookYear(bookYear + 1);
-        } else {
-          setBookMonth(bookMonth + 1);
-        }
-      }
-    };
-
-    checkAndAdvance();
-  }, [isBookModalOpen, bookedSlots, bookMonth, bookYear]);
+  }, [selectedCategoryTab, sortBy]);
 
   const scrollCategories = (direction) => {
     if (categoryScrollRef.current) {
@@ -444,9 +241,10 @@ const Home = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [productsRes, categoriesRes] = await Promise.allSettled([
+        const [productsRes, categoriesRes, testimonialsRes] = await Promise.allSettled([
           client.get('/api/public/products?limit=20', { silent: true }),
-          client.get('/api/public/categories', { silent: true })
+          client.get('/api/public/categories', { silent: true }),
+          client.get('/api/public/testimonials', { silent: true })
         ]);
 
         if (productsRes.status === 'fulfilled' && productsRes.value?.data?.success) {
@@ -458,6 +256,10 @@ const Home = () => {
 
         if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data?.success && Array.isArray(categoriesRes.value.data.data)) {
           setCategories(categoriesRes.value.data.data);
+        }
+
+        if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value?.data?.success && Array.isArray(testimonialsRes.value.data.data) && testimonialsRes.value.data.data.length > 0) {
+          setDynamicTestimonials(testimonialsRes.value.data.data);
         }
       } catch (err) {
         console.warn('DB Products fetch warning:', err);
@@ -487,17 +289,56 @@ const Home = () => {
     return days;
   };
 
-  // Filter products by category & search query
+  // Filter products by category and deep multi-attribute search query (Name, Category, Price, Tech Stack, Features)
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategoryTab === 'all' || 
       (product.categoryId?.slug || product.category) === selectedCategoryTab;
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (product.shortDescription && product.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
+
+    if (!searchQuery.trim()) return matchesCategory;
+
+    const q = searchQuery.trim().toLowerCase();
+    
+    // 1. Name & Descriptions
+    const matchText = 
+      (product.name && product.name.toLowerCase().includes(q)) ||
+      (product.shortDescription && product.shortDescription.toLowerCase().includes(q)) ||
+      (product.description && product.description.toLowerCase().includes(q));
+
+    // 2. Category Name or Slug
+    const categoryName = product.categoryId?.name || product.category || '';
+    const categorySlug = product.categoryId?.slug || product.category || '';
+    const matchCategory = categoryName.toLowerCase().includes(q) || categorySlug.toLowerCase().includes(q);
+
+    // 3. Price (numeric & text comparison e.g. 999, free)
+    const sellPriceStr = String(product.sellingPrice || product.price || '');
+    const origPriceStr = String(product.originalPrice || product.compareAtPrice || '');
+    const matchPrice = sellPriceStr.includes(q) || origPriceStr.includes(q) || (q === 'free' && Number(product.sellingPrice || product.price) === 0);
+
+    // 4. Technologies & Tech Stack
+    const techArray = product.technologies || product.techStack || [];
+    const matchTech = techArray.some(t => {
+      const tName = typeof t === 'string' ? t : (t.name || '');
+      return tName.toLowerCase().includes(q);
+    });
+
+    // 5. Features
+    const featArray = product.features || [];
+    const matchFeatures = featArray.some(f => {
+      const fText = typeof f === 'string' ? f : (f.title || f.description || '');
+      return fText.toLowerCase().includes(q);
+    });
+
+    return matchesCategory && (matchText || matchCategory || matchPrice || matchTech || matchFeatures);
   });
 
-  const gridProducts = filteredProducts.filter(p => p.slug !== 'superui-admin-dashboard');
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    if (sortBy === 'price-low') return (a.sellingPrice || a.price || 0) - (b.sellingPrice || b.price || 0);
+    if (sortBy === 'price-high') return (b.sellingPrice || b.price || 0) - (a.sellingPrice || a.price || 0);
+    return (b.downloadsCount || b.viewsCount || 0) - (a.downloadsCount || a.viewsCount || 0);
+  });
+
+  const gridProducts = sortedProducts.filter(p => p.slug !== 'superui-admin-dashboard');
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen text-neutral-900 selection:bg-brand-500 selection:text-white font-sans antialiased">
@@ -541,17 +382,17 @@ const Home = () => {
           {/* Badge Pill */}
           {heroData.badgeText && (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-xs font-bold shadow-sm mb-6 animate-fade-in">
-              <Sparkles className="h-3.5 w-3.5" />
+              <Bot className="h-3.5 w-3.5 text-brand-600 animate-pulse" />
               <span>{heroData.badgeText}</span>
             </div>
           )}
 
           {/* Hero Main Heading */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] w-[90%] max-w-5xl mx-auto">
             {renderHeroHeadline(heroData.headline, heroData.headlineHighlight)}
           </h1>
 
-          <p className="mt-6 text-base sm:text-lg text-neutral-600 max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="mt-6 text-base sm:text-lg lg:text-xl text-neutral-600 w-[90%] max-w-3xl mx-auto font-medium leading-relaxed">
             {heroData.subheadline}
           </p>
 
@@ -579,14 +420,14 @@ const Home = () => {
           </div>
 
           {/* Social Proof metrics */}
-          <div className="mt-12 inline-flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-6 sm:px-8 py-3 rounded-full bg-white/90 border border-neutral-200/90 shadow-md text-xs font-semibold text-neutral-600 max-w-4xl mx-auto backdrop-blur-md">
-            
+          <div className="mt-5 min-[600px]:mt-5 inline-flex flex-wrap items-center justify-center gap-3 sm:gap-6 px-6 sm:px-8 py-3 rounded-full max-[599px]:rounded-[10px] bg-white/90 border border-neutral-200/90 shadow-md text-xs font-semibold text-neutral-600 max-w-[90%] sm:max-w-[94%] mx-auto backdrop-blur-md">
+
             {/* Metric 1: Instant Digital Delivery */}
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-brand-50 text-brand-600 shrink-0">
+              <div className="p-1.5 rounded-full max-[599px]:rounded-[10px]  bg-brand-50 text-brand-600 shrink-0 sm:">
                 <Zap className="h-4 w-4 fill-brand-600/20 text-brand-600" />
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-xs ">
                 <span className="font-extrabold text-neutral-900">Instant</span>
                 <span className="text-neutral-600 font-medium">Digital Delivery</span>
               </div>
@@ -623,8 +464,7 @@ const Home = () => {
           </div>
 
           {/* Hero Widescreen Showcase Container with Spinning Halo Ring */}
-          <div className="mt-12 sm:mt-16 relative max-w-[1550px] w-full mx-auto px-2 sm:px-4">
-            
+<div className="mt-12 sm:mt-5 relative max-w-[1550px] w-full mx-auto px-2 sm:px-4">
             {/* Spinning Gradient Halo Ring */}
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[850px] h-[550px] bg-gradient-to-r from-brand-500/30 via-orange-400/25 to-sky-400/30 blur-[130px] rounded-full animate-spin-slow pointer-events-none z-0" />
             
@@ -639,27 +479,27 @@ const Home = () => {
                 className="w-full h-auto object-cover object-top rounded-xl sm:rounded-2xl shadow-inner"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent rounded-xl sm:rounded-2xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/70">Premium Template</p>
-                  <h3 className="text-base sm:text-lg font-extrabold text-white">SuperUI Admin Dashboard</h3>
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 sm:gap-4">
+                <div className="space-y-1 max-[600px]:hidden">
+                  <p className="text-[8px] xs:text-[10px] font-bold uppercase tracking-wider text-white/70">Premium Template</p>
+                  <h3 className="text-sm xs:text-base sm:text-lg font-extrabold text-white">SuperUI Admin Dashboard</h3>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-neutral-900 text-xs font-bold hover:bg-neutral-100 transition-colors shadow-lg"
+                    className="hidden xs:inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-white/90 hover:bg-white text-neutral-900 text-xs sm:text-[13px] font-bold transition-all duration-300 shadow-xl hover:shadow-2xl border border-white/50"
                   >
+                    <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>View More</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                   <button
                     onClick={() => {
                       const product = products.find(p => p.slug === 'superui-admin-dashboard') || products[0];
                       if (product) handleBuyNow(product);
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-xs font-bold hover:bg-brand-700 transition-colors shadow-lg"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white text-xs sm:text-[13px] font-bold transition-all duration-300 shadow-xl hover:shadow-brand-500/30"
                   >
-                    <ShoppingCart className="h-3.5 w-3.5" />
+                    <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>Buy Now</span>
                   </button>
                 </div>
@@ -669,118 +509,75 @@ const Home = () => {
         </div>
       </section>
 
-      {/* SEARCH BAR & CATEGORY TAG FILTER SECTION (As shown in reference image) */}
-      <section className="py-12 bg-white border-y border-neutral-200/80">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+
+
+
+      {/* REAL DB PRODUCT CARDS GRID SECTION */}
+      <section className="py-12 sm:py-16">
+        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12">
           
-          {/* Search Pill Input (Matching Reference Image) */}
-          <div className="relative max-w-4xl mx-auto mb-8">
-            <input
-              type="text"
-              placeholder="What type of design are you interested in?"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-7 pr-16 py-4 sm:py-5 rounded-full border border-neutral-200/90 bg-neutral-100/70 text-sm font-medium text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500 shadow-sm transition-all"
-            />
-            <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 p-3.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white transition-colors shadow-md">
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Popular Category Filter Pills Row (Matching Reference Image media_1787995973136.png) */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            
-            {/* Left side: Scrollable Admin Categories Row with Arrow Buttons & Mouse Scroll */}
-            <div className="flex items-center gap-2 overflow-hidden relative flex-1 min-w-0">
-              <span className="text-xs font-bold text-neutral-900 shrink-0 mr-1">Categories:</span>
-
-              {/* Left Scroll Arrow */}
-              <button
-                onClick={() => scrollCategories('left')}
-                className="p-2 rounded-full border border-neutral-200 bg-white hover:bg-neutral-100 text-neutral-700 shadow-sm shrink-0 transition-colors"
-                title="Scroll left"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-
-              {/* Horizontally Scrollable Pills Container with Mouse Wheel Scroll support */}
-              <div
-                ref={categoryScrollRef}
-                onWheel={handleCategoryWheel}
-                className="flex items-center gap-2 overflow-x-auto py-1 scroll-smooth no-scrollbar select-none"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                <button
-                  onClick={() => setSelectedCategoryTab('all')}
-                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                    selectedCategoryTab === 'all'
-                      ? 'bg-neutral-900 text-white shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                  }`}
-                >
-                  All Assets
-                </button>
-
-                {categories.map((cat) => (
-                  <button
-                    key={cat.slug}
-                    onClick={() => setSelectedCategoryTab(cat.slug)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                      selectedCategoryTab === cat.slug
-                        ? 'bg-neutral-900 text-white shadow-sm'
-                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Right Scroll Arrow */}
-              <button
-                onClick={() => scrollCategories('right')}
-                className="p-2 rounded-full border border-neutral-200 bg-white hover:bg-neutral-100 text-neutral-700 shadow-sm shrink-0 transition-colors"
-                title="Scroll right"
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            {/* Right side: Filter / Sort Dropdown */}
-            <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-800 shadow-sm focus:outline-none cursor-pointer hover:border-neutral-300"
-              >
-                <option value="popular">Popular ∨</option>
-                <option value="newest">Newest First</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* REAL DB PRODUCT CARDS GRID SECTION (Strictly DB Products, No Fake Defaults) */}
-      <section className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-3 sm:px-6 lg:px-8 2xl:px-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-10">
+          {/* Header Row */}
+          <div className="flex flex-row items-center justify-between mb-8 gap-4 flex-wrap">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-600">Verified Database Store</h2>
-              <p className="text-2xl sm:text-4xl font-extrabold text-neutral-900 mt-1">
-                Store Products Catalog ({gridProducts.length})
+              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-600 flex items-center gap-1.5">
+                <Cpu className="h-3.5 w-3.5" />
+                <span>Verified Store Catalog</span>
+              </h2>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-neutral-900 mt-1">
+                Explore Digital Products ({gridProducts.length})
               </p>
             </div>
             <Link
               to="/products"
-              className="mt-4 sm:mt-0 text-xs font-bold text-neutral-700 hover:text-brand-600 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 transition-colors"
+              className="text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 flex items-center gap-1.5 px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:shadow-brand-500/25 active:scale-95 transition-all duration-200 shrink-0 group border border-brand-500/30"
             >
-              <span>View Full Catalog</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span>View Full Store Catalog</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
+          </div>
+
+          {/* Centered Pill Search Bar (Matching Reference Image media_1788319281942.png) */}
+          <div className="mb-12 max-w-3xl mx-auto relative group">
+            {/* Outer Glow */}
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-500/20 via-orange-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
+            
+            <div className="relative flex items-center bg-[#F7F7F8] dark:bg-neutral-900 rounded-full border border-neutral-200/90 dark:border-neutral-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="What type of design are you interested in?"
+                className="w-full bg-transparent text-sm sm:text-base font-medium text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none pr-4"
+              />
+              
+              <div className="flex items-center space-x-2 shrink-0">
+                {searchQuery.trim() && (
+                  <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-[10px] font-extrabold border border-brand-200 shrink-0">
+                    {filteredProducts.length} Match
+                  </span>
+                )}
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="p-1.5 text-neutral-400 hover:text-neutral-700 rounded-full hover:bg-neutral-200/60 transition-colors mr-1"
+                    title="Clear Search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+
+                {/* Circular Orange Magnifying Glass Search Button */}
+                <button
+                  type="button"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#ff5100] hover:bg-[#e64d00] text-white flex items-center justify-center shadow-md shadow-orange-500/30 hover:scale-105 transition-all shrink-0 cursor-pointer"
+                  title="Search"
+                >
+                  <Search className="h-5 w-5 stroke-[2.5]" />
+                </button>
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -790,9 +587,9 @@ const Home = () => {
           ) : gridProducts.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-3xl border border-neutral-200 p-8 space-y-3">
               <p className="text-base font-bold text-neutral-900">No store products match your filter.</p>
-              <p className="text-xs text-neutral-500">Try selecting "All Assets" or clear your search input.</p>
+              <p className="text-xs text-neutral-500">Try selecting "All Assets".</p>
               <button
-                onClick={() => { setSelectedCategoryTab('all'); setSearchQuery(''); }}
+                onClick={() => setSelectedCategoryTab('all')}
                 className="px-5 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold"
               >
                 Reset Filters
@@ -948,7 +745,7 @@ const Home = () => {
                       <button
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-neutral-700 disabled:hover:border-neutral-200 transition-all shadow-sm cursor-pointer"
                       >
                         Previous
                       </button>
@@ -961,8 +758,8 @@ const Home = () => {
                             onClick={() => setCurrentPage(pageNum)}
                             className={`h-9 w-9 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer ${
                               currentPage === pageNum
-                                ? 'bg-neutral-900 text-white shadow-md'
-                                : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                                ? 'bg-brand-600 text-white shadow-md shadow-brand-500/25 font-black scale-105'
+                                : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300'
                             }`}
                           >
                             {pageNum}
@@ -973,7 +770,7 @@ const Home = () => {
                       <button
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-neutral-700 disabled:hover:border-neutral-200 transition-all shadow-sm cursor-pointer"
                       >
                         Next
                       </button>
@@ -990,11 +787,11 @@ const Home = () => {
       <section className="py-20 bg-white border-t border-neutral-200/80">
         <div className="mx-auto max-w-7xl 2xl:max-w-[1700px] px-4 sm:px-6 lg:px-8 2xl:px-12 text-center space-y-8">
           
-          <div className="space-y-3">
-            <h2 className="text-4xl sm:text-5xl font-black text-neutral-900 tracking-tight">
+          <div className="space-y-3 w-[90%] mx-auto">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
               Services <span className="font-medium text-neutral-500">We Offer</span>
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-500 max-w-md mx-auto font-bold leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-md mx-auto font-bold leading-relaxed">
               From first click to final conversion, every service is built around one goal: growing your business.
             </p>
             <div className="pt-3">
@@ -1018,9 +815,9 @@ const Home = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left max-w-6xl mx-auto pt-8">
               {services.map((service, idx) => (
-                <Link
-                  key={idx}
-                  to={service.link || '/contact'}
+                <div
+                  key={service._id || idx}
+                  onClick={() => navigate(`/services/${service.slug || service._id}`)}
                   className="group relative h-[340px] rounded-3xl overflow-hidden cursor-pointer block border border-neutral-200/60 shadow-sm hover:shadow-2xl hover:shadow-neutral-300/40 hover:border-neutral-300/80 transition-all duration-500"
                 >
                   {/* Image */}
@@ -1048,23 +845,19 @@ const Home = () => {
                     <p className="text-[11px] text-white/75 font-medium leading-relaxed line-clamp-2 mb-4">
                       {service.description}
                     </p>
-                    {/* CTA with animated arrow */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        openBookingModal(service.title);
-                      }}
+                    {/* Glass effect CTA button to dedicated Service Detail page */}
+                    <Link
+                      to={`/services/${service.slug || service._id}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center gap-2 text-[11px] font-bold text-white bg-white/15 backdrop-blur-sm border border-white/20 px-4 py-2.5 rounded-xl w-fit group-hover:bg-white/25 group-hover:border-white/40 transition-all duration-300"
                     >
-                      <span>Book a call now</span>
+                      <span>View Service Detail</span>
                       <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </button>
+                    </Link>
                   </div>
                   {/* Subtle shine effect on hover */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -1214,25 +1007,28 @@ const Home = () => {
         {/* Marquee Row 1 (Scrolls Left Seamless Gapless Loop) */}
         <div className="relative w-full overflow-hidden mb-6 select-none">
           <div className="animate-marquee flex gap-6 pr-6">
-            {[...testimonials, ...testimonials, ...testimonials, ...testimonials].map((item, idx) => (
-              <div
-                key={idx}
-                className="w-[340px] sm:w-[380px] shrink-0 p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-sm space-y-4 hover:border-neutral-300 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs">
-                    {item.initials}
+            {(() => {
+              const items = dynamicTestimonials.length > 0 ? dynamicTestimonials : testimonials;
+              return [...items, ...items, ...items, ...items].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="w-[340px] sm:w-[380px] shrink-0 p-6 rounded-2xl bg-white border border-neutral-200/90 shadow-sm space-y-4 hover:border-neutral-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-xs">
+                      {item.initials || (item.name ? item.name.substring(0, 2).toUpperCase() : 'U')}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-neutral-900">{item.name}</h4>
+                      <p className="text-[11px] text-neutral-400 font-medium">{item.role}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-neutral-900">{item.name}</h4>
-                    <p className="text-[11px] text-neutral-400 font-medium">{item.role}</p>
-                  </div>
+                  <p className="text-xs text-neutral-600 leading-relaxed font-medium">
+                    &ldquo;{item.text}&rdquo;
+                  </p>
                 </div>
-                <p className="text-xs text-neutral-600 leading-relaxed font-medium">
-                  "{item.text}"
-                </p>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </div>
 
@@ -1297,362 +1093,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* CAL.COM CALL BOOKING MODAL */}
-      {isBookModalOpen && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-          <div className="bg-[#131313] text-white rounded-3xl border border-neutral-800 w-full max-w-[950px] overflow-hidden flex flex-col md:flex-row relative max-h-[90vh] md:max-h-[640px] shadow-2xl">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                setIsBookModalOpen(false);
-              }}
-              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white rounded-full bg-neutral-900/50 hover:bg-neutral-800/80 z-20 transition-all"
-            >
-              <X className="h-4.5 w-4.5" />
-            </button>
-
-            {/* Left Column: Details (32% width) */}
-            <div className="w-full md:w-[32%] p-6 md:p-8 border-b md:border-b-0 md:border-r border-neutral-800 space-y-6 shrink-0 bg-[#0A0A0A] text-left">
-              <div className="flex items-center gap-3">
-                <BrandLogo className="h-8 w-8" hideText />
-                <span className="text-white font-extrabold text-sm tracking-tight">SuperUI</span>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-snug">Project Discovery Call</h3>
-                <p className="text-xs text-neutral-400 font-medium leading-relaxed">
-                  Book a free 30-minute call to discuss your project. We'll cover your goals, audience, and needs so we can give you a clear plan and timeline.
-                </p>
-              </div>
-
-              <div className="space-y-3.5 pt-4 border-t border-neutral-800 text-neutral-400 text-xs font-semibold">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-neutral-500" />
-                  <span>30m</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Monitor className="h-4 w-4 text-neutral-500" />
-                  <span>Voice Call</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-neutral-500" />
-                  <span>Telangana, India</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side: Custom Booker System */}
-            <div className="flex-grow p-6 md:p-8 md:pt-12 md:pr-14 bg-[#131313] overflow-y-auto min-h-0 text-left relative flex flex-col justify-start items-stretch">
-              {bookingStep === 'calendar' && (
-                <div className="space-y-6 flex flex-col justify-between flex-grow">
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-brand-500 mb-2">
-                      1. Select Date & Time
-                    </h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                      {/* Left: Calendar grid */}
-                      <div className="border border-neutral-800 p-5 rounded-2xl bg-neutral-950/40">
-                        {/* Month navigation header - centered and white text */}
-                        <div className="flex items-center justify-between mb-4 px-1">
-                          <button
-                            type="button"
-                            onClick={handlePrevMonth}
-                            disabled={bookYear === getInitialBookingMonthAndYear().year && bookMonth === getInitialBookingMonthAndYear().month}
-                            className="p-1 px-2.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-                          >
-                            &lt;
-                          </button>
-                          <span className="text-xs font-extrabold text-white tracking-wide">
-                            {monthNames[bookMonth]} {bookYear}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleNextMonth}
-                            className="p-1 px-2.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white cursor-pointer transition-colors"
-                          >
-                            &gt;
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-extrabold text-neutral-500 mb-2">
-                          {daysOfWeek.map(day => (
-                            <div key={day}>{day}</div>
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-7 gap-2">
-                          {(() => {
-                            const daysInMonth = new Date(bookYear, bookMonth + 1, 0).getDate();
-                            const firstDayIndex = new Date(bookYear, bookMonth, 1).getDay();
-                            const prevMonthDays = new Date(bookYear, bookMonth, 0).getDate();
-
-                            const cells = [];
-                            
-                            // 1. Previous Month Muted Padding Days
-                            for (let i = firstDayIndex - 1; i >= 0; i--) {
-                              const d = prevMonthDays - i;
-                              cells.push(
-                                <div
-                                  key={`prev-${d}`}
-                                  className="aspect-square text-xs font-bold rounded-xl flex items-center justify-center text-neutral-750 opacity-20 cursor-not-allowed"
-                                >
-                                  {d}
-                                </div>
-                              );
-                            }
-
-                             // 2. Current Month Selectable Days
-                             for (let d = 1; d <= daysInMonth; d++) {
-                               const dateStr = `${bookYear}-${String(bookMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                               const dateToCheck = new Date(bookYear, bookMonth, d);
-                               const todayVal = new Date();
-                               todayVal.setHours(0, 0, 0, 0);
-                               
-                               const isSelectable = dateToCheck > todayVal && !isFullyBooked(dateStr);
-                               const isSelected = selectedBookDate === dateStr;
-
-                              cells.push(
-                                <button
-                                  key={`day-${d}`}
-                                  type="button"
-                                  disabled={!isSelectable}
-                                  onClick={() => {
-                                    setSelectedBookDate(dateStr);
-                                    setSelectedBookTime(''); // Reset time on date change
-                                  }}
-                                  className={`aspect-square text-xs font-bold rounded-xl transition-all ${
-                                    isSelected
-                                      ? 'bg-brand-600 text-white shadow-md shadow-brand-500/25'
-                                      : isSelectable
-                                      ? 'bg-neutral-900 text-neutral-200 hover:bg-neutral-800 hover:text-white cursor-pointer'
-                                      : 'bg-transparent text-neutral-750 opacity-20 cursor-not-allowed'
-                                  }`}
-                                >
-                                  {d}
-                                </button>
-                              );
-                            }
-
-                            // 3. Next Month Muted Padding Days
-                            const totalRendered = cells.length;
-                            const nextMonthNeeded = 42 - totalRendered;
-                            for (let d = 1; d <= nextMonthNeeded; d++) {
-                              cells.push(
-                                <div
-                                  key={`next-${d}`}
-                                  className="aspect-square text-xs font-bold rounded-xl flex items-center justify-center text-neutral-750 opacity-20 cursor-not-allowed"
-                                >
-                                  {d}
-                                </div>
-                              );
-                            }
-
-                            return cells;
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Right: Time Slots */}
-                      <div className="space-y-3">
-                        <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-500">
-                          Available Slots {selectedBookDate ? `for ${selectedBookDate}` : ''}
-                        </h5>
-                        
-                        {!selectedBookDate ? (
-                          <div className="h-full flex items-center justify-center p-8 border border-dashed border-neutral-800 rounded-2xl text-center text-xs text-neutral-500">
-                            Please select a date from the calendar first.
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2 max-h-[170px] overflow-y-auto pr-1">
-                            {timeSlots.map(slot => {
-                              const isSelected = selectedBookTime === slot;
-                              const isBooked = bookedSlots.some(b => b.date === selectedBookDate && b.time === slot);
-                              return (
-                                <button
-                                  key={slot}
-                                  type="button"
-                                  disabled={isBooked}
-                                  onClick={() => setSelectedBookTime(slot)}
-                                  className={`py-2 px-3 text-[11px] font-bold rounded-xl border transition-all ${
-                                    isSelected
-                                      ? 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-500/10 cursor-pointer'
-                                      : isBooked
-                                      ? 'bg-neutral-950/40 text-neutral-650 border-neutral-900 line-through opacity-25 cursor-not-allowed'
-                                      : 'bg-neutral-900 text-neutral-300 border-neutral-800 hover:bg-neutral-800 hover:text-white cursor-pointer'
-                                  }`}
-                                >
-                                  {slot}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={!selectedBookDate || !selectedBookTime}
-                    onClick={() => setBookingStep('form')}
-                    className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold disabled:opacity-40 disabled:cursor-not-allowed transition-all mt-4"
-                  >
-                    Next: Enter Details
-                  </button>
-                </div>
-              )}
-
-              {bookingStep === 'form' && (
-                <form onSubmit={handleBookingSubmit} className="space-y-5 flex flex-col justify-between flex-grow">
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-brand-500">
-                      2. Enter Booking Details
-                    </h4>
-                    
-                    <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-xl text-xs space-y-1">
-                      <p className="text-neutral-400 font-semibold">Selected Session Time:</p>
-                      <p className="text-white font-extrabold text-xs">
-                        {new Date(selectedBookDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at {selectedBookTime} (IST)
-                      </p>
-                    </div>
-
-                    <div className="space-y-3.5 text-xs text-left">
-                      <div>
-                        <label className="block text-neutral-400 font-bold mb-1.5 uppercase text-[9px]">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={bookName}
-                          onChange={(e) => setBookName(e.target.value)}
-                          placeholder="Your Name"
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-neutral-650 focus:outline-none focus:border-brand-500 transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-neutral-400 font-bold mb-1.5 uppercase text-[9px]">Email Address</label>
-                        <input
-                          type="email"
-                          required
-                          value={bookEmail}
-                          onChange={(e) => setBookEmail(e.target.value)}
-                          placeholder="your.email@example.com"
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-neutral-650 focus:outline-none focus:border-brand-500 transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-neutral-400 font-bold mb-1.5 uppercase text-[9px]">Instagram ID</label>
-                        <input
-                          type="text"
-                          value={bookInstagramId}
-                          onChange={(e) => setBookInstagramId(e.target.value)}
-                          placeholder="@username"
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-neutral-650 focus:outline-none focus:border-brand-500 transition-all"
-                        />
-                        {getCleanInstagramUsername(bookInstagramId) && (
-                          <div className="mt-2.5 p-3 rounded-xl bg-neutral-950 border border-neutral-850 space-y-2 animate-fade-in text-left">
-                            <div className="text-[10px] text-neutral-400 font-semibold flex items-center gap-1.5">
-                              <span>Verify Link:</span>
-                              <a
-                                href={`https://instagram.com/${getCleanInstagramUsername(bookInstagramId)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-brand-500 hover:text-brand-400 hover:underline flex items-center gap-0.5 transition-colors font-bold"
-                              >
-                                instagram.com/{getCleanInstagramUsername(bookInstagramId)}
-                                <ExternalLink className="h-2.5 w-2.5 inline" />
-                              </a>
-                            </div>
-                            <div className="text-[10px] text-brand-500 font-extrabold leading-relaxed border-t border-neutral-900 pt-1.5 flex items-start gap-1">
-                              <span>⚠️</span>
-                              <span>Please enter your correct Instagram ID. Our team will call/contact you on Instagram only.</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-neutral-400 font-bold mb-1.5 uppercase text-[9px]">Main Cell Number</label>
-                        <input
-                          type="tel"
-                          required
-                          value={bookPhone}
-                          onChange={(e) => setBookPhone(e.target.value)}
-                          placeholder="e.g. +91 98765 43210"
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-neutral-650 focus:outline-none focus:border-brand-500 transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-neutral-400 font-bold mb-1.5 uppercase text-[9px]">Message / Requirements (Optional)</label>
-                        <textarea
-                          rows={3}
-                          value={bookMessage}
-                          onChange={(e) => setBookMessage(e.target.value)}
-                          placeholder="Brief description of what you'd like to cover..."
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-neutral-650 focus:outline-none focus:border-brand-500 transition-all resize-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setBookingStep('calendar')}
-                      className="py-3 px-6 rounded-xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors text-xs font-bold"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={bookingSubmitLoading}
-                      className="flex-grow py-3 px-6 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold transition-all disabled:opacity-50"
-                    >
-                      {bookingSubmitLoading ? 'Scheduling...' : 'Confirm Call Booking'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {bookingStep === 'success' && (
-                <div className="flex flex-col items-center justify-center text-center p-8 space-y-6 flex-grow">
-                  <div className="h-16 w-16 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-500">
-                    <Check className="h-8 w-8 stroke-[3]" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-extrabold text-white">Call Booking Confirmed!</h3>
-                    <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                      We have scheduled your 30-minute discovery call and sent a Google Meet invitation link to <b>{bookEmail}</b>.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-neutral-900/60 border border-neutral-800 rounded-2xl text-xs text-left w-full max-w-sm space-y-1">
-                    <p className="text-neutral-400 font-semibold">Scheduled Date & Time:</p>
-                    <p className="text-white font-extrabold text-xs">
-                      {new Date(selectedBookDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at {selectedBookTime} (IST)
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsBookModalOpen(false)}
-                    className="py-3 px-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-800 text-xs font-bold transition-all"
-                  >
-                    Done
-                  </button>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* Live Website Preview Modal */}
       <LivePreviewModal

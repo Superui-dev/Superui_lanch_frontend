@@ -21,7 +21,7 @@ const Downloads = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await client.get('/api/admin/download/logs');
+      const res = await client.get('/api/admin/downloads/logs');
       if (res.data?.success && res.data?.data) {
         const formatted = res.data.data.map((log, idx) => ({
           _id: log._id || `token-${idx}`,
@@ -56,7 +56,7 @@ const Downloads = () => {
     
     setActionLoading(id);
     try {
-      const res = await client.put(`/api/admin/download/tokens/${id}/revoke`);
+      const res = await client.put(`/api/admin/downloads/tokens/${id}/revoke`);
       if (res.data?.success) {
         setTokens(prev => prev.map(t => t._id === id ? { ...t, status: newStatus } : t));
       } else {

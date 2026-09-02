@@ -227,6 +227,10 @@
   color: #ff5100;
 }
 
+.bg-neon-orange {
+  background-color: #ff5100;
+}
+
 /* Gradient border utility */
 .gradient-border {
   position: relative;

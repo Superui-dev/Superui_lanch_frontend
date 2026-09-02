@@ -161,20 +161,6 @@ const WebsiteSettings = () => {
               </div>
             </div>
           </Link>
-          <Link
-            to="/india/admin/services"
-            className={`${colors.cardBg} border ${colors.cardBorder} rounded-2xl p-6 hover:shadow-md transition-all duration-200 group`}
-          >
-            <div className="flex items-center space-x-3">
-              <div className={`p-3 rounded-xl ${colors.accentBg} ${colors.accent}`}>
-                <Grid className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className={`text-sm font-bold ${colors.text} group-hover:text-brand-600 transition-colors`}>Services</h3>
-                <p className={`text-[11px] ${colors.textSecondary} mt-0.5`}>Manage homepage service cards, titles, images, and links.</p>
-              </div>
-            </div>
-          </Link>
         </div>
 
         {/* Dynamic configuration tabs */}

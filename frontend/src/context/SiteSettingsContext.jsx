@@ -135,10 +135,20 @@ services: [
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await client.get('/api/public/settings', { silent: true });
-        if (res.data?.success && res.data?.data) {
-          setSettings(prev => ({ ...prev, ...res.data.data }));
+        const [settingsRes, servicesRes] = await Promise.allSettled([
+          client.get('/api/public/settings', { silent: true }),
+          client.get('/api/public/services', { silent: true })
+        ]);
+
+        let updated = {};
+        if (settingsRes.status === 'fulfilled' && settingsRes.value?.data?.success && settingsRes.value?.data?.data) {
+          updated = { ...settingsRes.value.data.data };
         }
+        if (servicesRes.status === 'fulfilled' && servicesRes.value?.data?.success && Array.isArray(servicesRes.value?.data?.data)) {
+          updated.services = servicesRes.value.data.data;
+        }
+
+        setSettings(prev => ({ ...prev, ...updated }));
       } catch (err) {
         // Quiet fallback to default settings
       } finally {

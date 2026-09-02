@@ -33,6 +33,8 @@ const Products = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [documentationUrl, setDocumentationUrl] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusCounts, setStatusCounts] = useState({ all: 0, published: 0, draft: 0, archived: 0 });
   const [currentPage, setCurrentPage] = useState(1);
   const [slug, setSlug] = useState('');
   const [status, setStatus] = useState('published');
@@ -47,9 +49,12 @@ const Products = () => {
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    if (categoryFilter === 'all') return products;
-    return products.filter(p => (p.categoryId?.name || p.category) === categoryFilter);
-  }, [products, categoryFilter]);
+    return products.filter(p => {
+      const matchCategory = categoryFilter === 'all' || (p.categoryId?.name || p.category) === categoryFilter;
+      const matchStatus = statusFilter === 'all' || (p.status || 'published') === statusFilter;
+      return matchCategory && matchStatus;
+    });
+  }, [products, categoryFilter, statusFilter]);
 
   const paginatedProducts = useMemo(() => {
     return filteredProducts.slice(
@@ -64,13 +69,15 @@ const Products = () => {
     setLoading(true);
     try {
       const [productsRes, catRes] = await Promise.allSettled([
-        client.get('/api/public/products?limit=100'),
+        client.get('/api/admin/products?limit=200'),
         client.get('/api/public/categories')
       ]);
 
       if (productsRes.status === 'fulfilled' && productsRes.value?.data?.success) {
-        const list = productsRes.value.data.data?.products || productsRes.value.data.data;
+        const data = productsRes.value.data.data;
+        const list = data?.products || data;
         if (Array.isArray(list)) setProducts(list);
+        if (data?.statusCounts) setStatusCounts(data.statusCounts);
       }
 
       if (catRes.status === 'fulfilled' && catRes.value?.data?.success && Array.isArray(catRes.value.data.data)) {
@@ -95,8 +102,8 @@ const Products = () => {
   const openCreateModal = () => {
     setEditingProduct(null);
     setName('');
-    setPrice(0);
-    setSellingPrice(0);
+    setPrice(2999);
+    setSellingPrice(999);
     setCategory('react');
     setDescription('');
     setShortDescription('');
@@ -118,8 +125,8 @@ const Products = () => {
   const openEditModal = (prod) => {
     setEditingProduct(prod);
     setName(prod.name || '');
-    setPrice(prod.compareAtPrice || prod.price || 0);
-    setSellingPrice(prod.price || prod.sellingPrice || 0);
+    setPrice(prod.originalPrice || prod.compareAtPrice || prod.price || 0);
+    setSellingPrice(prod.sellingPrice || prod.actualPrice || prod.price || 0);
     setCategory(prod.categoryId?.slug || prod.category || 'react');
     setDescription(prod.description || '');
     setShortDescription(prod.shortDescription || '');
@@ -167,11 +174,15 @@ const Products = () => {
       alt: idx === 0 ? (name || 'Product image') : ''
     }));
 
+    const origPrice = Number(price);
+    const sellPrice = Number(sellingPrice);
+
     const payload = {
       name,
-      price: Number(sellingPrice || price),
-      compareAtPrice: Number(price),
-      sellingPrice: Number(sellingPrice),
+      originalPrice: origPrice >= sellPrice ? origPrice : sellPrice,
+      sellingPrice: sellPrice,
+      price: sellPrice,
+      compareAtPrice: origPrice >= sellPrice ? origPrice : sellPrice,
       category,
       shortDescription: shortDescription || description,
       description,
@@ -255,9 +266,36 @@ const Products = () => {
           </button>
         </header>
 
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {[
+            { key: 'all', label: 'All Products', color: 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' },
+            { key: 'published', label: 'Published', color: 'bg-emerald-500 text-white' },
+            { key: 'draft', label: 'Draft', color: 'bg-amber-500 text-white' },
+            { key: 'archived', label: 'Archived', color: 'bg-neutral-500 text-white' }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
+                statusFilter === tab.key
+                  ? `${tab.color} shadow-md border-transparent`
+                  : `${isLight ? 'border-neutral-200 text-neutral-600 hover:bg-neutral-50' : 'border-neutral-700 text-slate-300 hover:bg-neutral-800'}`
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                statusFilter === tab.key ? 'bg-white/25 text-white' : (isLight ? 'bg-neutral-100 text-neutral-700' : 'bg-neutral-800 text-slate-300')
+              }`}>
+                {statusCounts[tab.key] ?? filteredProducts.length}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {/* Category Filter */}
         <div className="flex items-center space-x-3">
-          <label className={`text-xs font-medium ${colors.textSecondary} uppercase tracking-wider`}>Filter:</label>
+          <label className={`text-xs font-medium ${colors.textSecondary} uppercase tracking-wider`}>Category:</label>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -490,6 +528,59 @@ const Products = () => {
                           <option value="draft">Draft</option>
                           <option value="archived">Archived</option>
                         </select>
+                      </div>
+                    </div>
+
+                    {/* Product Pricing Section */}
+                    <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 flex items-center gap-1.5">
+                          <Tag className="h-3.5 w-3.5" />
+                          <span>Product Pricing (INR ₹) *</span>
+                        </label>
+                        {Number(price) > Number(sellingPrice) && Number(price) > 0 && (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            {Math.round(((Number(price) - Number(sellingPrice)) / Number(price)) * 100)}% OFF DISCOUNT
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Original Price (MSRP / MRP) *</label>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400">₹</span>
+                            <input
+                              type="number"
+                              required
+                              min="0"
+                              step="1"
+                              value={price}
+                              onChange={(e) => setPrice(e.target.value)}
+                              placeholder="2999"
+                              className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl pl-8 pr-4 py-3 ${colors.text} focus:outline-none ${colors.inputFocus} transition-all duration-200 text-sm font-semibold`}
+                            />
+                          </div>
+                          <p className="text-[10px] text-neutral-400 mt-1">Original list price before discount (strikethrough)</p>
+                        </div>
+
+                        <div>
+                          <label className={`block ${colors.textSecondary} font-medium mb-1.5 uppercase text-[10px]`}>Selling Price (Offer Price) *</label>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400">₹</span>
+                            <input
+                              type="number"
+                              required
+                              min="0"
+                              step="1"
+                              value={sellingPrice}
+                              onChange={(e) => setSellingPrice(e.target.value)}
+                              placeholder="999"
+                              className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl pl-8 pr-4 py-3 ${colors.text} focus:outline-none ${colors.inputFocus} transition-all duration-200 text-sm font-semibold text-emerald-600 dark:text-emerald-400`}
+                            />
+                          </div>
+                          <p className="text-[10px] text-neutral-400 mt-1">Final checkout price paid by customers</p>
+                        </div>
                       </div>
                     </div>
 

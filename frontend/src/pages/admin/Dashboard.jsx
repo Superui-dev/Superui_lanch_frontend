@@ -35,23 +35,36 @@ const Dashboard = () => {
 
   // Socket connection for live visitor count
   useEffect(() => {
-    const token = sessionStorage.getItem('admin_mfa_token') || 'demo-admin-token';
+    const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
+    const token = mfaToken || 'demo-admin-token';
     const socket = io(`${SOCKET_URL}/admin`, {
-      auth: { token },
+      auth: { token, mfaToken },
       transports: ['polling', 'websocket'],
-      reconnectionAttempts: 3
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000,
+      autoConnect: true
     });
 
-    socket.on('connect_error', () => {
+    socket.on('connect', () => {
+      setVisitorLoading(false);
+    });
+
+    socket.on('connect_error', (err) => {
       setVisitorLoading(false);
     });
 
     socket.on('admin:visitor-live-count', (data) => {
-      setStats(prev => ({ ...prev, activeVisitors: data.count || prev.activeVisitors }));
+      const count = data?.count ?? data?.liveAdmins;
+      if (count !== undefined) {
+        setStats(prev => ({ ...prev, activeVisitors: count }));
+      }
       setVisitorLoading(false);
     });
 
     return () => {
+      socket.off('admin:visitor-live-count');
       socket.disconnect();
     };
   }, []);

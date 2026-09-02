@@ -14,14 +14,14 @@ const ServicesAdmin = () => {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const res = await client.get('/api/admin/settings');
-      if (res.data?.success && res.data?.data?.services) {
-        setServices(res.data.data.services);
+      const res = await client.get('/api/admin/services');
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setServices(res.data.data);
       } else {
         setServices([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch services:', err);
+      console.warn('Failed to fetch services from DB4:', err);
       setServices([]);
     } finally {
       setLoading(false);
@@ -32,11 +32,18 @@ const ServicesAdmin = () => {
     fetchServices();
   }, []);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newService.title.trim() || !newService.image.trim()) return;
-    const updated = [...services, { ...newService, order: services.length + 1, visible: true }];
-    setServices(updated);
-    setNewService({ title: '', description: '', image: '', bgImage: '', link: '/contact', code: '' });
+    try {
+      const payload = { ...newService, order: services.length + 1, visible: true };
+      const res = await client.post('/api/admin/services', payload);
+      if (res.data?.success) {
+        fetchServices();
+        setNewService({ title: '', description: '', image: '', bgImage: '', link: '/contact', code: '' });
+      }
+    } catch (err) {
+      alert('Failed to add service: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   const handleUpdate = (index, field, value) => {
@@ -44,7 +51,15 @@ const ServicesAdmin = () => {
     setServices(updated);
   };
 
-  const handleRemove = (index) => {
+  const handleRemove = async (index) => {
+    const serviceToDelete = services[index];
+    if (serviceToDelete && serviceToDelete._id) {
+      try {
+        await client.delete(`/api/admin/services/${serviceToDelete._id}`);
+      } catch (err) {
+        console.warn('Failed to delete service by id:', err);
+      }
+    }
     const updated = services.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i + 1 }));
     setServices(updated);
   };
@@ -61,8 +76,9 @@ const ServicesAdmin = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await client.put('/api/admin/settings', { services });
-      alert('Services saved successfully!');
+      await client.put('/api/admin/services', { services });
+      alert('Services saved successfully to DB4 (operations_security_db)!');
+      fetchServices();
     } catch (err) {
       alert('Failed to save: ' + (err.response?.data?.message || err.message));
     } finally {
@@ -225,10 +241,11 @@ const ServicesAdmin = () => {
                     <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} w-12`}>Order</th>
                     <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} w-12`}>Visible</th>
                     <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[160px]`}>Title</th>
-                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[240px]`}>Description</th>
-                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[200px]`}>Image URL</th>
-                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[200px]`}>Background Image</th>
-                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[180px]`}>Code / JSON</th>
+                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[150px]`}>Slug</th>
+                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[220px]`}>Description</th>
+                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[200px]`}>Features (Comma-separated)</th>
+                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[160px]`}>Tech Stack</th>
+                    <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[180px]`}>Image URL</th>
                     <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} min-w-[140px]`}>Link</th>
                     <th className={`py-3 px-4 text-[10px] font-bold uppercase tracking-wider ${colors.textSecondary} w-28 text-right`}>Actions</th>
                   </tr>
@@ -275,11 +292,38 @@ const ServicesAdmin = () => {
                         />
                       </td>
                       <td className="py-3 px-4">
+                        <input
+                          type="text"
+                          value={service.slug || ''}
+                          onChange={(e) => handleUpdate(idx, 'slug', e.target.value)}
+                          placeholder="auto-generated"
+                          className={`w-full px-3 py-2 rounded-lg border text-xs font-mono ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus}`}
+                        />
+                      </td>
+                      <td className="py-3 px-4">
                         <textarea
                           rows={1}
                           value={service.description}
                           onChange={(e) => handleUpdate(idx, 'description', e.target.value)}
                           className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus} resize-none`}
+                        />
+                      </td>
+                      <td className="py-3 px-4">
+                        <input
+                          type="text"
+                          value={Array.isArray(service.features) ? service.features.join(', ') : (service.features || '')}
+                          onChange={(e) => handleUpdate(idx, 'features', e.target.value)}
+                          placeholder="Feature 1, Feature 2"
+                          className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus}`}
+                        />
+                      </td>
+                      <td className="py-3 px-4">
+                        <input
+                          type="text"
+                          value={Array.isArray(service.techStack) ? service.techStack.join(', ') : (service.techStack || '')}
+                          onChange={(e) => handleUpdate(idx, 'techStack', e.target.value)}
+                          placeholder="React, Node.js"
+                          className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus}`}
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -293,23 +337,7 @@ const ServicesAdmin = () => {
                       <td className="py-3 px-4">
                         <input
                           type="text"
-                          value={service.bgImage || ''}
-                          onChange={(e) => handleUpdate(idx, 'bgImage', e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus}`}
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <textarea
-                          rows={2}
-                          value={service.code || ''}
-                          onChange={(e) => handleUpdate(idx, 'code', e.target.value)}
-                          className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus} resize-none font-mono`}
-                        />
-                      </td>
-                      <td className="py-3 px-4">
-                        <input
-                          type="text"
-                          value={service.link}
+                          value={service.link || `/services/${service.slug || ''}`}
                           onChange={(e) => handleUpdate(idx, 'link', e.target.value)}
                           className={`w-full px-3 py-2 rounded-lg border text-xs ${colors.borderInput} ${colors.bgInput} ${colors.text} focus:outline-none ${colors.inputFocus}`}
                         />
@@ -334,14 +362,26 @@ const ServicesAdmin = () => {
         {/* JSON Preview */}
         {services.length > 0 && (
           <section className={`rounded-2xl border ${colors.cardBorder} ${colors.cardBg} shadow-sm overflow-hidden`}>
-            <div className={`px-6 py-4 border-b ${colors.border}`}>
-              <h2 className={`text-sm font-bold ${colors.text}`}>JSON Preview</h2>
-              <p className={`text-[11px] ${colors.textSecondary} mt-0.5`}>
-                This JSON data will be saved to the database when you click "Save All Changes"
-              </p>
+            <div className={`px-6 py-4 border-b ${colors.border} flex items-center justify-between`}>
+              <div>
+                <h2 className={`text-sm font-bold ${colors.text}`}>Services JSON Data (DB4 - operations_security_db)</h2>
+                <p className={`text-[11px] ${colors.textSecondary} mt-0.5`}>
+                  All {sortedServices.length} service cards formatted in JSON structure stored in database 4.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(sortedServices, null, 2));
+                  alert('Services JSON copied to clipboard!');
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Code className="h-3.5 w-3.5" />
+                <span>Copy JSON</span>
+              </button>
             </div>
             <div className="p-6 overflow-x-auto">
-              <pre className={`text-xs font-mono leading-relaxed ${colors.text} bg-neutral-50 dark:bg-neutral-950 p-4 rounded-xl border ${colors.borderInput} overflow-x-auto`}>
+              <pre className={`text-xs font-mono leading-relaxed ${colors.text} bg-neutral-50 dark:bg-neutral-950 p-4 rounded-xl border ${colors.borderInput} overflow-x-auto select-all`}>
                 {JSON.stringify(sortedServices, null, 2)}
               </pre>
             </div>

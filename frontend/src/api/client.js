@@ -16,6 +16,9 @@ const client = axios.create({
 client.interceptors.request.use(
   async (config) => {
     try {
+      const isAdminRequest = config.url?.includes('/api/admin') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/india/admin'));
+      const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
+
       // Fetch supabase token from local storage or context if loaded
       const sessionStr = localStorage.getItem('supabase.auth.token') || 
                          localStorage.getItem('sb-token') || 
@@ -31,16 +34,18 @@ client.interceptors.request.use(
         }
       }
       
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      // If MFA token is present (stored during admin authentication)
-      const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
-      if (mfaToken) {
+      if (isAdminRequest && mfaToken) {
+        config.headers.Authorization = `Bearer ${mfaToken}`;
         config.headers['x-mfa-token'] = mfaToken;
-        if (!config.headers.Authorization) {
-          config.headers.Authorization = `Bearer ${mfaToken}`;
+      } else {
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        if (mfaToken) {
+          config.headers['x-mfa-token'] = mfaToken;
+          if (!config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${mfaToken}`;
+          }
         }
       }
     } catch (err) {
@@ -75,9 +80,13 @@ client.interceptors.response.use(
       });
     }
 
-    if (error.response?.status === 401 && window.location.pathname.startsWith('/india/admin')) {
+    // Only clear the MFA token on 403 (token present but MFA verification failed/expired),
+    // not on 401 (which may be transient or fixable on retry). Deleting on 401 created a
+    // feedback loop that wiped valid sessions on every unauthenticated request.
+    if (error.response?.status === 403 && window.location.pathname.startsWith('/india/admin')) {
       sessionStorage.removeItem('admin_mfa_token');
       localStorage.removeItem('admin_mfa_token');
+      sessionStorage.removeItem('admin_mfa_verified');
     }
 
     return Promise.reject(error);

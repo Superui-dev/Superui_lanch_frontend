@@ -83,84 +83,15 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              {menuItems.map((item, idx) => {
-                if (item.label.toLowerCase() === 'products') {
-                  return (
-                    <div
-                      key={idx}
-                      className="relative"
-                      onMouseEnter={() => setProductsDropdownOpen(true)}
-                      onMouseLeave={() => setProductsDropdownOpen(false)}
-                    >
-                      <button
-                        className="inline-flex items-center space-x-1 px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/60"
-                      >
-                        <span>{item.label}</span>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {/* Mega Dropdown */}
-                      {productsDropdownOpen && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[550px] bg-white rounded-3xl border border-neutral-200/90 shadow-2xl p-6">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">
-                                Browse Categories
-                              </h3>
-                              <div className="space-y-1">
-                                <Link
-                                  to="/products"
-                                  className="block px-3 py-2 rounded-xl text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-brand-600 transition-colors"
-                                >
-                                  All Products
-                                </Link>
-                                {categories.map((cat) => (
-                                  <Link
-                                    key={cat._id || cat.slug}
-                                    to={`/products?category=${cat.slug}`}
-                                    className="block px-3 py-2 rounded-xl text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-brand-600 transition-colors"
-                                  >
-                                    {cat.name}
-                                  </Link>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">
-                                Quick Links
-                              </h3>
-                              <div className="space-y-1">
-                                <Link
-                                  to="/products"
-                                  className="block px-3 py-2 rounded-xl text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-brand-600 transition-colors"
-                                >
-                                  Featured Release
-                                </Link>
-                                <Link
-                                  to="/portfolio"
-                                  className="block px-3 py-2 rounded-xl text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-brand-600 transition-colors"
-                                >
-                                  Live Demos
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={idx}
-                    to={item.url || item.href || '#'}
-                    className="px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/60"
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {menuItems.map((item, idx) => (
+                <Link
+                  key={idx}
+                  to={item.url || item.href || (item.label.toLowerCase() === 'products' ? '/products' : '#')}
+                  className="px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/60"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
 
             {/* Right side actions */}
@@ -286,7 +217,7 @@ const Navbar = () => {
 
                   <button
                     onClick={() => openAuthModal('signup')}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md hover:shadow-brand-500/20"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-md hover:shadow-brand-500/25 active:scale-95 cursor-pointer"
                   >
                     <span>Sign Up</span>
                   </button>
@@ -355,7 +286,7 @@ const Navbar = () => {
                   </button>
                   <button
                     onClick={() => { openAuthModal('signup'); setMobileMenuOpen(false); }}
-                    className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-neutral-900 text-xs font-bold text-white shadow-md"
+                    className="w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-xs font-bold text-white shadow-md active:scale-95 transition-all"
                   >
                     <span>Create Customer Account</span>
                   </button>
