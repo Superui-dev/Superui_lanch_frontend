@@ -41,9 +41,9 @@ const Dashboard = () => {
       auth: { token, mfaToken },
       transports: ['polling', 'websocket'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      timeout: 20000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 5000,
+      timeout: 10000,
       autoConnect: true
     });
 
@@ -51,7 +51,7 @@ const Dashboard = () => {
       setVisitorLoading(false);
     });
 
-    socket.on('connect_error', (err) => {
+    socket.on('connect_error', () => {
       setVisitorLoading(false);
     });
 
@@ -148,7 +148,7 @@ const Dashboard = () => {
         setSalesTimeline(timelineData);
         setRecentOrders(ordersList);
       } catch (err) {
-        console.warn('DB Dashboard report fetch failed:', err);
+        // Fallback state quietly retained
       } finally {
         setLoadingDashboard(false);
       }

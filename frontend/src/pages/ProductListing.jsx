@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useAuth } from '../context/AuthContext';
 import LivePreviewModal from '../components/common/LivePreviewModal';
+import ProductCardImageCarousel from '../components/common/ProductCardImageCarousel';
 import { 
   Search, 
   ShoppingCart, 
@@ -18,7 +19,11 @@ import {
   Monitor, 
   Palette, 
   ChevronDown, 
-  Check 
+  Check,
+  Phone,
+  ArrowRight,
+  Folder,
+  Zap
 } from 'lucide-react';
 
 const categoryIcons = {
@@ -41,10 +46,11 @@ const ProductListing = () => {
   const [previewProduct, setPreviewProduct] = useState(null);
   
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
   const categoryFilter = searchParams.get('category') || 'all';
   const { addToCart } = useCart();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
-  const { openAuthModal, user } = useAuth();
+  const { openAuthModal, openBookingModal, user } = useAuth();
 
   const handleAddToCart = (product) => {
     if (!user) {
@@ -57,6 +63,20 @@ const ProductListing = () => {
       price: product.sellingPrice || product.price,
       image: product.thumbnail?.url || product.image
     });
+  };
+
+  const handleBuyNow = (product) => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+    addToCart({
+      _id: product._id,
+      name: product.name,
+      price: product.sellingPrice || product.price,
+      image: product.thumbnail?.url || product.image
+    });
+    navigate('/checkout');
   };
 
   useEffect(() => {
@@ -77,12 +97,19 @@ const ProductListing = () => {
         }
 
         if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data?.success && Array.isArray(categoriesRes.value.data.data)) {
-          setCategories(categoriesRes.value.data.data);
+          const seen = new Set();
+          const unique = categoriesRes.value.data.data.filter(cat => {
+            const key = String(cat._id);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setCategories(unique.sort((a, b) => (a.order || 0) - (b.order || 0)));
         } else {
           setCategories([]);
         }
       } catch (err) {
-        console.warn('Failed to fetch DB products for store:', err);
+        // Fallback gracefully
       } finally {
         setLoading(false);
       }
@@ -101,15 +128,32 @@ const ProductListing = () => {
   }, []);
 
   const filteredProducts = products.filter(p => {
+    const matchedCat = categories.find(c => String(c._id) === String(p.categoryId?._id || p.categoryId));
+    const prodCatSlug = (p.categoryId?.slug || matchedCat?.slug || (typeof p.category === 'string' ? p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '')).toLowerCase();
+    const prodCatName = (p.categoryId?.name || matchedCat?.name || p.category || '').toLowerCase();
+    const prodCatId = String(p.categoryId?._id || p.categoryId || '');
+    
+    const filterLower = categoryFilter.toLowerCase();
     const matchCategory = categoryFilter === 'all' 
       ? true 
-      : (p.categoryId?.slug === categoryFilter || p.category === categoryFilter);
+      : (
+          prodCatSlug === filterLower || 
+          prodCatName === filterLower || 
+          prodCatId === categoryFilter ||
+          (matchedCat && (
+            matchedCat.slug?.toLowerCase() === filterLower ||
+            String(matchedCat._id) === categoryFilter ||
+            matchedCat.name?.toLowerCase() === filterLower
+          ))
+        );
+      
     const term = searchQuery.toLowerCase().trim();
     const matchQuery = !term ||
       p.name?.toLowerCase().includes(term) ||
       p.description?.toLowerCase().includes(term) ||
+      p.shortDescription?.toLowerCase().includes(term) ||
       String(p.sellingPrice || p.price || '').toLowerCase().includes(term) ||
-      (p.categoryId?.name || p.category || '').toLowerCase().includes(term);
+      prodCatName.includes(term);
     return matchCategory && matchQuery;
   });
 
@@ -120,8 +164,12 @@ const ProductListing = () => {
 
   // Resolve current active category label & icon
   const currentCategory = categoryFilter === 'all'
-    ? { slug: 'all', name: 'All Products' }
-    : categories.find(c => c.slug === categoryFilter || c._id === categoryFilter) || { slug: categoryFilter, name: categoryFilter };
+    ? { slug: 'all', name: 'All Categories' }
+    : categories.find(c => 
+        (c.slug && c.slug.toLowerCase() === categoryFilter.toLowerCase()) || 
+        String(c._id) === String(categoryFilter) ||
+        (c.name && c.name.toLowerCase() === categoryFilter.toLowerCase())
+      ) || { slug: categoryFilter, name: categoryFilter };
   
   const CurrentIcon = categoryIcons[currentCategory.slug] || LayoutGrid;
 
@@ -152,187 +200,244 @@ const ProductListing = () => {
         </div>
       </section>
 
-      {/* Category Dropdown + Category Bar + Search Filter */}
-      <section className="py-6 bg-white border-b border-neutral-200/80 sticky top-16 z-20 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      {/* Category Dropdown + Search Filter Toolbar (New Unified Pattern matching 2nd Image) */}
+      <section className="py-6 bg-white border-b border-neutral-200/80 sticky top-16 z-20 shadow-xs">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-3">
+          
+          {/* Unified Floating Filter & Search Bar Container */}
+          <div className="p-2 sm:p-2.5 rounded-3xl bg-neutral-50 border border-neutral-200/90 shadow-sm flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
             
-            {/* Category Filter Controls: Dropdown + Quick Pills */}
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-              
-              {/* 1st Position: Premium Category Dropdown Menu */}
-              <div className="relative shrink-0" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="inline-flex items-center justify-between space-x-2.5 px-4 py-2.5 rounded-2xl bg-neutral-900 text-white hover:bg-brand-600 text-xs font-bold shadow-md transition-all border border-neutral-800 shrink-0 min-w-[210px] group"
-                >
-                  <div className="flex items-center space-x-2.5 truncate">
-                    <CurrentIcon className="h-4 w-4 text-brand-400 group-hover:text-white shrink-0 transition-colors" />
-                    <span className="truncate">{currentCategory.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5 shrink-0 ml-2">
-                    <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-[10px] text-neutral-300 font-semibold border border-neutral-700">
-                      {categoryFilter === 'all' ? products.length : filteredProducts.length}
-                    </span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-brand-400' : 'text-neutral-400'}`} />
-                  </div>
-                </button>
-
-                {/* Dropdown Floating Panel */}
-                {dropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-72 bg-white rounded-2xl border border-neutral-200/90 shadow-2xl z-30 p-2 animate-fadeIn space-y-1">
-                    
-                    {/* Search inside Dropdown */}
-                    <div className="p-1.5">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
-                        <input
-                          type="text"
-                          placeholder="Search categories..."
-                          value={dropdownSearch}
-                          onChange={(e) => setDropdownSearch(e.target.value)}
-                          className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-neutral-200 text-xs bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="max-h-60 overflow-y-auto space-y-0.5 pr-0.5">
-                      {/* All Products Option */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchParams({});
-                          setDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                          categoryFilter === 'all'
-                            ? 'bg-brand-50 text-brand-700 font-bold'
-                            : 'text-neutral-700 hover:bg-neutral-100'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2 truncate">
-                          <LayoutGrid className="h-4 w-4 text-neutral-500 shrink-0" />
-                          <span>All Products</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-[10px] text-neutral-400 font-mono">({products.length})</span>
-                          {categoryFilter === 'all' && <Check className="h-3.5 w-3.5 text-brand-600 ml-1" />}
-                        </div>
-                      </button>
-
-                      {/* Filtered Categories */}
-                      {categories
-                        .filter(c => c.name.toLowerCase().includes(dropdownSearch.toLowerCase()))
-                        .map((cat) => {
-                          const Icon = categoryIcons[cat.slug] || LayoutGrid;
-                          const isActive = categoryFilter === cat.slug;
-                          const catProductCount = products.filter(p => p.categoryId?.slug === cat.slug || p.category === cat.slug).length;
-                          return (
-                            <button
-                              key={cat._id || cat.slug}
-                              type="button"
-                              onClick={() => {
-                                setSearchParams({ category: cat.slug });
-                                setDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                                isActive
-                                  ? 'bg-brand-50 text-brand-700 font-bold'
-                                  : 'text-neutral-700 hover:bg-neutral-100'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-2 truncate">
-                                <Icon className="h-4 w-4 text-neutral-500 shrink-0" />
-                                <span className="truncate">{cat.name}</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <span className="text-[10px] text-neutral-400 font-mono">({catProductCount})</span>
-                                {isActive && <Check className="h-3.5 w-3.5 text-brand-600 ml-1" />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Category Pills Row for Fast Switching */}
-              <div className="flex items-center space-x-2 shrink-0">
-                {categories.map((cat) => {
-                  const Icon = categoryIcons[cat.slug] || LayoutGrid;
-                  const isActive = categoryFilter === cat.slug;
-                  return (
-                    <button
-                      key={cat._id || cat.slug}
-                      type="button"
-                      onClick={() => setSearchParams({ category: cat.slug })}
-                      className={`inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all border ${
-                        isActive
-                          ? 'bg-brand-600 text-white border-brand-600 shadow-sm font-bold'
-                          : 'bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200'
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{cat.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-            </div>
-
-            {/* Search Input & Extra Actions */}
-            <div className="flex items-center space-x-3 shrink-0">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, price, category..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 rounded-xl border border-neutral-300 bg-white text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all w-56 sm:w-64"
-                />
-              </div>
-
+            {/* 1. Category Custom Dropdown Selector */}
+            <div className="relative shrink-0" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-neutral-300 bg-white text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full md:w-auto inline-flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold shadow-sm transition-all duration-200 border border-neutral-800 min-w-[210px] cursor-pointer group"
               >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                <span>Filters</span>
+                <div className="flex items-center gap-2.5 truncate">
+                  <CurrentIcon className="h-4 w-4 text-brand-400 group-hover:text-white shrink-0 transition-colors" />
+                  <span className="truncate">{currentCategory.name}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 ml-1">
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-[10px] text-neutral-300 font-semibold border border-neutral-700">
+                    {categoryFilter === 'all' 
+                      ? (products.length > 0 ? products.length : categories.reduce((s, c) => s + (c.productCount || 0), 0))
+                      : (products.length > 0 ? filteredProducts.length : (currentCategory.productCount ?? 0))
+                    }
+                  </span>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 text-neutral-400 ${dropdownOpen ? 'rotate-180 text-brand-400' : ''}`} />
+                </div>
               </button>
+
+              {/* Popover Floating Panel */}
+              {dropdownOpen && (
+                <div className="absolute left-0 mt-2 w-72 bg-white rounded-2xl border border-neutral-200/90 shadow-2xl z-40 p-2 animate-fadeIn space-y-1">
+                  
+                  {/* Search inside Dropdown */}
+                  <div className="p-1.5">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                      <input
+                        type="text"
+                        placeholder="Filter categories..."
+                        value={dropdownSearch}
+                        onChange={(e) => setDropdownSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-neutral-200 text-xs bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-0.5 pr-0.5">
+                    {/* All Categories Option */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchParams({});
+                        setDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                        categoryFilter === 'all'
+                          ? 'bg-brand-50 text-brand-700 font-bold'
+                          : 'text-neutral-700 hover:bg-neutral-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <LayoutGrid className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span>All Categories</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-neutral-400 font-mono font-medium">
+                          ({products.length > 0 ? products.length : categories.reduce((s, c) => s + (c.productCount || 0), 0)})
+                        </span>
+                        {categoryFilter === 'all' && <Check className="h-3.5 w-3.5 text-brand-600" />}
+                      </div>
+                    </button>
+
+                    <div className="h-px bg-neutral-100 my-1" />
+
+                    {/* Filtered Categories */}
+                    {categories
+                      .filter(c => c.name?.toLowerCase().includes(dropdownSearch.toLowerCase()))
+                      .map((cat) => {
+                        const Icon = categoryIcons[cat.slug] || LayoutGrid;
+                        const isActive = (cat.slug && cat.slug.toLowerCase() === categoryFilter.toLowerCase()) || 
+                                         String(cat._id) === String(categoryFilter) || 
+                                         (cat.name && cat.name.toLowerCase() === categoryFilter.toLowerCase());
+                        const catProductCount = products.length > 0
+                          ? products.filter(p => {
+                              const matchedProductCat = categories.find(c => String(c._id) === String(p.categoryId?._id || p.categoryId));
+                              const pSlug = (p.categoryId?.slug || matchedProductCat?.slug || (typeof p.category === 'string' ? p.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '')).toLowerCase();
+                              const pName = (p.categoryId?.name || matchedProductCat?.name || p.category || '').toLowerCase();
+                              const pId = String(p.categoryId?._id || p.categoryId || '');
+                              return (cat.slug && pSlug === cat.slug.toLowerCase()) || 
+                                     (cat.name && pName === cat.name.toLowerCase()) || 
+                                     pId === String(cat._id);
+                            }).length
+                          : (cat.productCount ?? 0);
+
+                        return (
+                          <button
+                            key={cat._id || cat.slug}
+                            type="button"
+                            onClick={() => {
+                              setSearchParams({ category: cat.slug || cat._id });
+                              setDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                              isActive
+                                ? 'bg-brand-50 text-brand-700 font-bold'
+                                : 'text-neutral-700 hover:bg-neutral-100'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 truncate">
+                              <div
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: cat.color || '#F97316' }}
+                              />
+                              <span className="truncate">{cat.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                              <span className="text-[10px] text-neutral-400 font-mono font-medium">
+                                ({catProductCount})
+                              </span>
+                              {isActive && <Check className="h-3.5 w-3.5 text-brand-600" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* 2. All Products Quick Reset Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchParams({});
+                setSearchQuery('');
+                setDropdownSearch('');
+                setSortBy('popular');
+              }}
+              className={`shrink-0 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 border min-w-[150px] cursor-pointer ${
+                categoryFilter === 'all' && !searchQuery
+                  ? 'bg-brand-600 border-brand-600 text-white shadow-md hover:shadow-brand-500/20'
+                  : 'bg-white border-neutral-200/90 text-neutral-700 hover:bg-neutral-50'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+              <span>All Products</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono ${
+                categoryFilter === 'all' && !searchQuery
+                  ? 'bg-white/20 text-white'
+                  : 'bg-neutral-100 text-neutral-500'
+              }`}>
+                {products.length > 0 ? products.length : categories.reduce((s, c) => s + (c.productCount || 0), 0)}
+              </span>
+            </button>
+
+            {/* 3. Live Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search products (e.g. templates, UI kits, dashboards, code...)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white border border-neutral-200/90 text-xs sm:text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all font-medium shadow-xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* 3. Book a Free Call CTA Button */}
+            <button
+              onClick={openBookingModal}
+              className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-brand-500/20 transition-all duration-200 shrink-0 cursor-pointer group"
+            >
+              <Phone className="h-3.5 w-3.5 text-white fill-current shrink-0" />
+              <span>Book a Free Call</span>
+              <div className="p-1 rounded-full bg-white/20 group-hover:rotate-45 transition-transform duration-200">
+                <ArrowRight className="h-3 w-3 text-white rotate-[-45deg]" />
+              </div>
+            </button>
 
           </div>
 
-          {/* Active Filter Chips */}
-          {(categoryFilter !== 'all' || searchQuery) && (
-            <div className="mt-3 flex items-center space-x-2">
-              <span className="text-[10px] text-neutral-500 font-semibold">Active filters:</span>
-              {categoryFilter !== 'all' && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-200 text-[10px] font-bold text-brand-700">
-                  Category: {currentCategory.name}
-                  <button type="button" onClick={() => setSearchParams({})} className="ml-1 text-brand-500 hover:text-brand-900">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              {searchQuery && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-neutral-100 border border-neutral-200 text-[10px] font-bold text-neutral-700">
-                  Search: &quot;{searchQuery}&quot;
-                  <button type="button" onClick={() => setSearchQuery('')} className="ml-1 text-neutral-500 hover:text-neutral-900">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              )}
-              <button type="button" onClick={clearFilters} className="text-[10px] text-neutral-600 hover:text-neutral-900 underline font-semibold">
-                Clear all
-              </button>
-            </div>
-          )}
+          {/* Active Filters & Results Counter Strip */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-2 text-xs">
+            <span className="text-neutral-500 font-semibold">
+              Showing <strong className="text-neutral-900 font-extrabold">{filteredProducts.length}</strong> of {products.length} products
+            </span>
+
+            {(categoryFilter !== 'all' || searchQuery.trim()) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-neutral-400 font-semibold">Active:</span>
+
+                {categoryFilter !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-[11px] font-bold">
+                    <span>Category: {currentCategory.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchParams({})}
+                      className="hover:text-brand-900 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+
+                {searchQuery.trim() && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-[11px] font-bold">
+                    <span>Search: &ldquo;{searchQuery}&rdquo;</span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="hover:text-neutral-900 rounded-full p-0.5 cursor-pointer"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-[11px] font-bold text-neutral-500 hover:text-neutral-900 underline ml-1 cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+          </div>
+
         </div>
       </section>
 
@@ -364,17 +469,15 @@ const ProductListing = () => {
                     
                     {/* Thumbnail + Overlays */}
                     <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-                      <img
-                        src={product.thumbnail?.url || product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'; }}
-                      />
+                      <ProductCardImageCarousel product={product} />
 
                       {/* Category Badge */}
-                      <div className="absolute top-3 left-3">
+                      <div className="absolute top-3 left-3 z-10">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-neutral-900/80 backdrop-blur-md text-[10px] font-bold text-white shadow-sm">
-                          {product.categoryId?.name || product.category || 'Digital Asset'}
+                          {(() => {
+                            const matchedCat = categories.find(c => String(c._id) === String(product.categoryId?._id || product.categoryId));
+                            return product.categoryId?.name || matchedCat?.name || product.category || 'Digital Asset';
+                          })()}
                         </span>
                       </div>
 
@@ -416,23 +519,31 @@ const ProductListing = () => {
                         </p>
                       </div>
 
-                      <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
-                        <div className="flex items-baseline space-x-1.5">
-                          <span className="text-base font-extrabold text-neutral-900">
-                            ₹{(product.sellingPrice || product.price)?.toLocaleString()}
-                          </span>
+                      <div className="pt-3 border-t border-neutral-100 flex flex-col gap-3">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-base sm:text-lg font-black text-neutral-900 tracking-tight">
+                              ₹{(product.sellingPrice || product.price)?.toLocaleString()}
+                            </span>
+                            {product.compareAtPrice && product.compareAtPrice > (product.sellingPrice || product.price) && (
+                              <span className="text-xs text-neutral-400 line-through">
+                                ₹{product.compareAtPrice.toLocaleString()}
+                              </span>
+                            )}
+                          </div>
                           {product.compareAtPrice && product.compareAtPrice > (product.sellingPrice || product.price) && (
-                            <span className="text-xs text-neutral-400 line-through">
-                              ₹{product.compareAtPrice.toLocaleString()}
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold tracking-wide">
+                              {Math.round(((product.compareAtPrice - (product.sellingPrice || product.price)) / product.compareAtPrice) * 100)}% OFF
                             </span>
                           )}
                         </div>
 
-                        {/* Action buttons: View details & Add to cart */}
-                        <div className="flex items-center space-x-2">
+                        {/* Senior Developer 3-Action Toolbar: Details, Add to Cart, Direct Buy */}
+                        <div className="grid grid-cols-12 gap-1.5 pt-1">
                           <Link
                             to={`/products/${product.slug || product._id}`}
-                            className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold transition-colors"
+                            className="col-span-3 inline-flex items-center justify-center px-2 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-900 text-xs font-semibold transition-colors"
+                            title="View Full Product Details"
                           >
                             <span>Details</span>
                           </Link>
@@ -440,10 +551,21 @@ const ProductListing = () => {
                           <button
                             type="button"
                             onClick={() => handleAddToCart(product)}
-                            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-md shadow-brand-600/20"
+                            className="col-span-4 inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm"
+                            title="Add to Shopping Cart"
                           >
-                            <ShoppingCart className="h-3.5 w-3.5" />
+                            <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                             <span>Add</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleBuyNow(product)}
+                            className="col-span-5 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-brand-600 hover:from-orange-600 hover:to-brand-700 text-white text-xs font-black shadow-md shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            title="Buy Now (Direct Checkout)"
+                          >
+                            <Zap className="h-3.5 w-3.5 fill-current shrink-0" />
+                            <span>Buy Now</span>
                           </button>
                         </div>
                       </div>

@@ -3,7 +3,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 const AdminDateContext = createContext(null);
 
 export const AdminDateProvider = ({ children }) => {
-  const [selectedDate, setSelectedDate] = useState('');
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(today);
   const [dateRange, setDateRange] = useState({
     start: null,
     end: null

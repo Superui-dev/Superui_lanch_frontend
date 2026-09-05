@@ -5,7 +5,8 @@ import client from '../../api/client';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Pagination from '../../components/common/Pagination';
 import {
-  Plus, Pencil, Trash2, X, ArrowLeft, Eye, ImagePlus, Code, Tag, FileText, Link as LinkIcon, Monitor, Layers, Zap, ChevronDown, ChevronUp, Copy, Check
+  Plus, Pencil, Trash2, X, ArrowLeft, Eye, ImagePlus, Code, Tag, FileText, Link as LinkIcon, Monitor, Layers, Zap, ChevronDown, ChevronUp, Copy, Check,
+  ArrowUp, ArrowDown
 } from 'lucide-react';
 
 const Products = () => {
@@ -134,7 +135,7 @@ const Products = () => {
     setImages((prod.images || []).map(img => typeof img === 'string' ? img : img.url).filter(Boolean));
     setImageInput('');
     setTechInput(prod.technologies?.map(t => typeof t === 'string' ? t : t.name).join(', ') || '');
-    setFeaturesInput(prod.features?.join('\n') || '');
+    setFeaturesInput(prod.features?.map(f => typeof f === 'string' ? f : (f.title || f.description || f.name || String(f))).join('\n') || '');
     setPreviewUrl(prod.preview?.url || prod.previewUrl || '');
     setDocumentationUrl(prod.documentation?.url || prod.documentationUrl || '');
     setSlug(prod.slug || '');
@@ -177,22 +178,34 @@ const Products = () => {
     const origPrice = Number(price);
     const sellPrice = Number(sellingPrice);
 
+    const selectedCat = dbCategories.find(c => 
+      c.slug === category || 
+      c.name === category || 
+      String(c._id) === String(category)
+    );
+
+    const resolvedCategoryId = selectedCat?._id || (category && category.length === 24 ? category : undefined);
+    const resolvedCategorySlug = selectedCat?.slug || (typeof category === 'string' ? category : 'react');
+
     const payload = {
       name,
       originalPrice: origPrice >= sellPrice ? origPrice : sellPrice,
       sellingPrice: sellPrice,
       price: sellPrice,
       compareAtPrice: origPrice >= sellPrice ? origPrice : sellPrice,
-      category,
+      category: resolvedCategorySlug,
+      categoryId: resolvedCategoryId,
       shortDescription: shortDescription || description,
       description,
       thumbnail: { url: imagesPayload[0]?.url || allImages[0] },
       image: imagesPayload[0]?.url || allImages[0],
       images: imagesPayload,
+      techStack: techInput.split(',').map(t => ({ name: t.trim() })).filter(t => t.name),
       technologies: techInput.split(',').map(t => ({ name: t.trim() })).filter(t => t.name),
       features: featuresInput.split('\n').map(f => f.trim()).filter(Boolean),
       preview: { enabled: !!previewUrl, url: previewUrl },
       documentation: { enabled: !!documentationUrl, url: documentationUrl },
+      liveUrl: previewUrl,
       slug: slug || generateSlug(name),
       status: status || 'published'
     };
@@ -207,6 +220,25 @@ const Products = () => {
       await fetchProducts();
     } catch (err) {
       setError(err.response?.data?.message || 'Error saving product. Please check input values.');
+    }
+  };
+
+  const handleMoveProduct = async (prodId, direction) => {
+    const currentIdx = products.findIndex(p => p._id === prodId);
+    if (currentIdx === -1) return;
+    const targetIdx = direction === 'up' ? currentIdx - 1 : currentIdx + 1;
+    if (targetIdx < 0 || targetIdx >= products.length) return;
+
+    const reordered = [...products];
+    const [moved] = reordered.splice(currentIdx, 1);
+    reordered.splice(targetIdx, 0, moved);
+    setProducts(reordered);
+
+    try {
+      const orderedIds = reordered.map(p => p._id).filter(id => id && !id.startsWith('prod-'));
+      await client.put('/api/admin/products/reorder', { orderedIds });
+    } catch (err) {
+      console.error('Failed to update product order:', err);
     }
   };
 
@@ -317,7 +349,10 @@ const Products = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-              {paginatedProducts.map((prod) => (
+              {paginatedProducts.map((prod, idx) => {
+                const globalIdx = (currentPage - 1) * itemsPerPage + idx;
+                const catName = prod.categoryId?.name || dbCategories.find(c => String(c._id) === String(prod.categoryId?._id || prod.categoryId))?.name || prod.category || 'Templates';
+                return (
                 <div
                   key={prod._id}
                   className={`group ${colors.cardBg} border ${colors.cardBorder} rounded-2xl overflow-hidden hover:shadow-card transition-all duration-200 flex flex-col`}
@@ -329,6 +364,11 @@ const Products = () => {
                       alt={prod.name}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    <div className="absolute top-2 left-2">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-neutral-900/80 text-white backdrop-blur-sm shadow-sm">
+                        #{globalIdx + 1}
+                      </span>
+                    </div>
                     <div className="absolute top-2 right-2">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] uppercase font-bold border ${getStatusBadge(prod.status)}`}>
                         {prod.status || 'published'}
@@ -343,7 +383,7 @@ const Products = () => {
                     </div>
                     
                     <span className={`text-[10px] uppercase tracking-wider ${colors.accent} font-bold mb-3 inline-block`}>
-                      {prod.categoryId?.name || prod.category || 'UI Asset'}
+                      {catName}
                     </span>
 
                     <p className={`text-[11px] ${colors.textSecondary} line-clamp-2 mb-4 flex-1`}>
@@ -353,8 +393,8 @@ const Products = () => {
                     {/* Tech Stack */}
                     {prod.technologies && prod.technologies.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {prod.technologies.slice(0, 3).map((tech, idx) => (
-                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-[9px] font-bold text-neutral-600 dark:text-slate-300">
+                        {prod.technologies.slice(0, 3).map((tech, i) => (
+                          <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-[9px] font-bold text-neutral-600 dark:text-slate-300">
                             {typeof tech === 'string' ? tech : tech.name}
                           </span>
                         ))}
@@ -369,11 +409,19 @@ const Products = () => {
                     {/* Pricing */}
                     <div className={`flex justify-between items-baseline text-xs pt-3 mt-auto border-t ${colors.border}`}>
                       <div className={colors.textSecondary}>
-                        MSRP: <span className="line-through">INR {(prod.compareAtPrice || prod.price || 0).toLocaleString()}</span>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] uppercase font-medium">MSRP:</span>
+                          {((prod.originalPrice || prod.compareAtPrice) > (prod.sellingPrice || prod.price)) && (
+                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                              {prod.discountPercent || Math.round((((prod.originalPrice || prod.compareAtPrice) - (prod.sellingPrice || prod.price)) / (prod.originalPrice || prod.compareAtPrice)) * 100)}% OFF
+                            </span>
+                          )}
+                        </div>
+                        <span className="line-through">INR {(prod.originalPrice || prod.compareAtPrice || prod.actualPrice || prod.price || 0).toLocaleString()}</span>
                       </div>
                       <div className="text-right">
                         <span className={`text-[10px] ${colors.textMuted} block uppercase font-medium`}>Selling</span>
-                        <span className={`font-bold ${colors.text} text-base`}>INR {(prod.price || prod.sellingPrice || 0).toLocaleString()}</span>
+                        <span className={`font-bold ${colors.text} text-base`}>INR {(prod.sellingPrice || prod.price || 0).toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -400,10 +448,30 @@ const Products = () => {
                         <Trash2 className="h-3.5 w-3.5" />
                         <span>Delete</span>
                       </button>
+                      <div className="flex flex-col space-y-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProduct(prod._id, 'up')}
+                          disabled={globalIdx === 0}
+                          className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-xs"
+                          title="Move product up"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProduct(prod._id, 'down')}
+                          disabled={globalIdx === products.length - 1}
+                          className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-xs"
+                          title="Move product down"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             <Pagination

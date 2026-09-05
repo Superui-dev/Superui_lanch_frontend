@@ -29,7 +29,7 @@ const AdminFeedback = () => {
         }
       }
     } catch (err) {
-      console.warn('Failed to fetch admin feedback entries:', err);
+      // Quiet fallback
     } finally {
       setLoading(false);
     }

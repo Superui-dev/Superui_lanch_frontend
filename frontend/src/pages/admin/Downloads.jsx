@@ -39,7 +39,7 @@ const Downloads = () => {
         throw new Error('Invalid response');
       }
     } catch (err) {
-      console.warn('Failed to fetch download tokens:', err);
+      // Quiet fallback
       setTokens([]);
     } finally {
       setLoading(false);

@@ -69,9 +69,9 @@ import AdminLogin from '../pages/admin/AdminLogin';
 import MfaVerify from '../pages/admin/MfaVerify';
 import MfaEnroll from '../pages/admin/MfaEnroll';
 import Dashboard from '../pages/admin/Dashboard';
-import ProductsAdmin from '../pages/admin/Products';
 import CategoriesAdmin from '../pages/admin/Categories';
 import HeroImagesAdmin from '../pages/admin/HeroImages';
+import UpcomingBannersAdmin from '../pages/admin/UpcomingBanners';
 import CustomersAdmin from '../pages/admin/Customers';
 import OrdersAdmin from '../pages/admin/Orders';
 import PaymentsAdmin from '../pages/admin/Payments';
@@ -92,6 +92,7 @@ import VisitorsAdmin from '../pages/admin/Visitors';
 import PagesAdmin from '../pages/admin/Pages';
 import TestimonialsAdmin from '../pages/admin/TestimonialsAdmin';
 import PageConfigPanel from '../pages/admin/PageConfigPanel';
+import Products from '../pages/admin/Products';
 
 // Public Storefront Layout Wrapper
 const StorefrontLayout = ({ children }) => {
@@ -167,16 +168,6 @@ const AppRouter = () => {
         </AdminProtectedRoute>
       } />
       
-      <Route path="/india/admin/products" element={
-        <AdminProtectedRoute>
-          <AdminDateProvider>
-            <AdminThemeProvider>
-            <ProductsAdmin />
-          </AdminThemeProvider>
-          </AdminDateProvider>
-        </AdminProtectedRoute>
-      } />
-
       <Route path="/india/admin/categories" element={
         <AdminProtectedRoute>
           <AdminDateProvider>
@@ -192,6 +183,16 @@ const AppRouter = () => {
           <AdminDateProvider>
             <AdminThemeProvider>
             <HeroImagesAdmin />
+          </AdminThemeProvider>
+          </AdminDateProvider>
+        </AdminProtectedRoute>
+      } />
+
+      <Route path="/india/admin/upcoming-banners" element={
+        <AdminProtectedRoute>
+          <AdminDateProvider>
+            <AdminThemeProvider>
+            <UpcomingBannersAdmin />
           </AdminThemeProvider>
           </AdminDateProvider>
         </AdminProtectedRoute>
@@ -393,6 +394,16 @@ const AppRouter = () => {
           <AdminDateProvider>
             <AdminThemeProvider>
             <PageConfigPanel />
+          </AdminThemeProvider>
+          </AdminDateProvider>
+        </AdminProtectedRoute>
+      } />
+
+      <Route path="/india/admin/products" element={
+        <AdminProtectedRoute>
+          <AdminDateProvider>
+            <AdminThemeProvider>
+            <Products />
           </AdminThemeProvider>
           </AdminDateProvider>
         </AdminProtectedRoute>

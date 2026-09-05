@@ -31,7 +31,7 @@ const AdminIssues = () => {
         }
       }
     } catch (err) {
-      console.warn('Failed to fetch admin customer support issues:', err);
+      // Quiet fallback
     } finally {
       setLoading(false);
     }

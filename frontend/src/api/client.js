@@ -2,7 +2,7 @@ import axios from 'axios';
 import { classifyError } from '../utils/errorClassifier';
 
 // Connect to backend (Defaulting to localhost:5000 in development)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const client = axios.create({
   baseURL: `${API_BASE_URL}`,
@@ -10,7 +10,7 @@ const client = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 25000,
 });
 
 // Request Interceptor: Attach Supabase JWT to Authorization header
@@ -20,13 +20,14 @@ client.interceptors.request.use(
       const isAdminRequest = config.url?.includes('/api/admin') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/india/admin'));
       const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
 
+      const customerToken = localStorage.getItem('customer_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
       // Fetch supabase token from local storage or context if loaded
       const sessionStr = localStorage.getItem('supabase.auth.token') || 
                          localStorage.getItem('sb-token') || 
                          sessionStorage.getItem('sb-token');
       
-      let token = null;
-      if (sessionStr) {
+      let token = customerToken || null;
+      if (!token && sessionStr) {
         try {
           const parsed = JSON.parse(sessionStr);
           token = parsed?.currentSession?.access_token || parsed?.access_token || parsed;
@@ -41,16 +42,13 @@ client.interceptors.request.use(
       } else {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-        }
-        if (mfaToken) {
+        } else if (mfaToken) {
           config.headers['x-mfa-token'] = mfaToken;
-          if (!config.headers.Authorization) {
-            config.headers.Authorization = `Bearer ${mfaToken}`;
-          }
+          config.headers.Authorization = `Bearer ${mfaToken}`;
         }
       }
     } catch (err) {
-      console.error('Error attaching authentication token:', err);
+      // Quietly fall back if token retrieval fails
     }
     return config;
   },
@@ -65,21 +63,6 @@ client.interceptors.response.use(
   (error) => {
     const diagnostic = classifyError(error);
     error.diagnostic = diagnostic;
-
-    const isSilentCall = error.config?.silent || 
-                         error.config?.url?.includes('inspect-alert') || 
-                         error.config?.url?.includes('login-attempt') ||
-                         error.config?.url?.includes('wishlist') ||
-                         error.config?.url?.includes('settings') ||
-                         error.config?.url?.includes('categories') ||
-                         !error.response;
-
-    if (!isSilentCall && error.response?.status !== 401) {
-      console.warn(`[${diagnostic.layer} | ${diagnostic.category} | ${diagnostic.severity}] ${diagnostic.code}: ${diagnostic.userMessage}`, {
-        endpoint: diagnostic.endpoint,
-        suggestedFix: diagnostic.suggestedFix
-      });
-    }
 
     // Only clear the MFA token on 403 (token present but MFA verification failed/expired),
     // not on 401 (which may be transient or fixable on retry). Deleting on 401 created a

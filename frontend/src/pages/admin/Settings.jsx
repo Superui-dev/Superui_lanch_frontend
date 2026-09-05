@@ -44,7 +44,7 @@ const WebsiteSettings = () => {
           if (s.seo?.description) setSeoDescription(s.seo.description);
         }
       } catch (err) {
-        console.warn('Failed to load settings:', err.message);
+        // Settings fallback
       } finally {
         setLoadingSettings(false);
       }
@@ -95,7 +95,6 @@ const WebsiteSettings = () => {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error('Failed to save settings:', err);
       setSaveError(err.response?.data?.message || err.message || 'Failed to update settings.');
     } finally {
       setSaving(false);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import client from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import AccountSecurityModal from '../../components/common/AccountSecurityModal';
 import { Package, Receipt, FileText, Download, Calendar, ExternalLink, KeyRound, ShieldCheck } from 'lucide-react';
 

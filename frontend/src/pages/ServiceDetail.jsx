@@ -30,7 +30,6 @@ const ServiceDetail = () => {
           setError('Service not found.');
         }
       } catch (err) {
-        console.error('Error fetching service detail:', err);
         setError('Service detail unavailable.');
       } finally {
         setLoading(false);

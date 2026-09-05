@@ -92,7 +92,7 @@ const BookingCallModal = ({ isOpen, onClose, serviceName = '' }) => {
         setBookedSlots(res.data.data);
       }
     } catch (err) {
-      console.error('Failed to fetch booked slots:', err);
+      // Quiet fallback for booked slots
     }
   };
 

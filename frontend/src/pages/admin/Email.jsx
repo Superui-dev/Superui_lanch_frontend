@@ -75,7 +75,7 @@ const Email = () => {
         setEmailContactCounts(countsRes.data.data);
       }
     } catch (err) {
-      console.warn('Failed to fetch email status/logs:', err);
+      // Quiet fallback
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -35,7 +35,7 @@ const Security = () => {
         setLogs([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch security logs:', err);
+      // Quiet fallback
       setLogs([]);
     } finally {
       setLoading(false);

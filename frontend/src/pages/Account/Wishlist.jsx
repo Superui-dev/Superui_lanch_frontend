@@ -19,7 +19,6 @@ const Wishlist = () => {
           throw new Error('Wishlist empty');
         }
       } catch (err) {
-        console.warn('API error or empty wishlist.');
         setWishlist([]);
       } finally {
         setLoading(false);
@@ -33,7 +32,7 @@ const Wishlist = () => {
       await client.delete(`/api/wishlist/remove/${id}`);
       setWishlist(prev => prev.filter(item => item._id !== id));
     } catch (err) {
-      console.error('Failed to remove from wishlist');
+      // Failed to remove from wishlist
     }
   };
 

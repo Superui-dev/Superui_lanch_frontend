@@ -6,13 +6,15 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import AdminDatePicker from '../../components/common/AdminDatePicker';
 import Pagination from '../../components/common/Pagination';
 import client from '../../api/client';
-import { Receipt, Mail, Calendar, X, Inbox } from 'lucide-react';
+import { Receipt, Mail, Calendar, X, Inbox, CheckCircle, AlertTriangle, XCircle, TrendingUp } from 'lucide-react';
 
 const Orders = () => {
   const { colors } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { selectedDate, setSelectedDate } = useAdminDate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ todaySuccess: 0, monthSuccess: 0, failed: 0, pending: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -24,15 +26,30 @@ const Orders = () => {
         setOrders([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch orders:', err);
+      // Quiet fallback
       setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await client.get('/api/admin/orders/stats', { silent: true });
+      if (res.data?.success && res.data?.data) {
+        setStats(res.data.data);
+      }
+    } catch (err) {
+      // Quiet fallback
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchStats();
   }, []);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -57,6 +74,37 @@ const Orders = () => {
       time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     };
   };
+
+  const statsCards = [
+    { 
+      label: "Today's Success", 
+      value: stats.todaySuccess, 
+      icon: CheckCircle, 
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50'
+    },
+    { 
+      label: 'Month Success', 
+      value: stats.monthSuccess, 
+      icon: TrendingUp, 
+      color: 'text-brand-600',
+      bg: 'bg-brand-50'
+    },
+    { 
+      label: 'Failed', 
+      value: stats.failed, 
+      icon: XCircle, 
+      color: 'text-red-600',
+      bg: 'bg-red-50'
+    },
+    { 
+      label: 'Pending', 
+      value: stats.pending, 
+      icon: AlertTriangle, 
+      color: 'text-amber-600',
+      bg: 'bg-amber-50'
+    }
+  ];
 
   const filteredOrders = useMemo(() => {
     if (!selectedDate) return orders;
@@ -85,6 +133,23 @@ const Orders = () => {
           {/* Calendar Date Picker */}
           <AdminDatePicker label="Order Date" />
         </header>
+
+        {/* Stats Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statsCards.map((stat, idx) => (
+            <div key={idx} className={`p-6 rounded-2xl border ${colors.cardBg} ${colors.cardBorder} space-y-3 card-hover`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-medium uppercase tracking-wider ${colors.textSecondary}`}>{stat.label}</span>
+                <div className={`p-2 rounded-xl ${stat.bg}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+              </div>
+              <div>
+                <p className={`text-2xl font-bold ${colors.text}`}>{statsLoading ? '-' : stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </section>
 
         <div className={`${colors.cardBg} border ${colors.cardBorder} rounded-2xl overflow-hidden shadow-sm`}>
           <div className="overflow-x-auto">

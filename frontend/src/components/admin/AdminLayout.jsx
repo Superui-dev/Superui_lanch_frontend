@@ -9,7 +9,7 @@ import {
   LayoutDashboard, ShoppingBag, FolderOpen, Users, Receipt, CreditCard,
   Download, Mail, Bell, Settings, ShieldCheck, LogOut,
   ChevronRight, Menu, X, Sun, Moon, Search, PanelLeftClose, PanelLeftOpen, ChevronDown, TrendingUp,
-  Clock, Calendar, QrCode, Copy, Check, CheckCircle2, Eye, EyeOff, Image, Heart, LifeBuoy, Grid, Phone, Type
+  Clock, Calendar, QrCode, Copy, Check, CheckCircle2, Eye, EyeOff, Image, Heart, LifeBuoy, Grid, Phone, Type, Layers
 } from 'lucide-react';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
@@ -80,7 +80,7 @@ const playSound = (type) => {
       playTone(783.99, now + 0.36, 0.6, 0.05); // G5
     }
   } catch (e) {
-    console.warn('Audio synthesis failed:', e);
+    // Audio synthesis silently ignored
   }
 };
 
@@ -161,19 +161,14 @@ const AdminLayout = ({ children }) => {
       auth: { token, mfaToken: mfaToken || token },
       transports: ['polling', 'websocket'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      timeout: 20000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 5000,
+      timeout: 10000,
       autoConnect: true
     });
 
-    socket.on('connect', () => {
-      console.log('[Admin WS] Connected');
-    });
-
-    socket.on('connect_error', (err) => {
-      console.warn(`[Admin WS] Connection notice: ${err.message}`);
-    });
+    socket.on('connect', () => {});
+    socket.on('connect_error', () => {});
 
     socket.on('admin:visitor-live-count', (data) => {
       const count = data?.count ?? data?.liveAdmins;
@@ -243,7 +238,6 @@ const AdminLayout = ({ children }) => {
 
   const sidebarLinks = [
     { label: 'Dashboard', path: '/india/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Products', path: '/india/admin/products', icon: ShoppingBag },
     { label: 'Categories', path: '/india/admin/categories', icon: FolderOpen },
     { label: 'Customers', path: '/india/admin/customers', icon: Users },
     { label: 'Orders', path: '/india/admin/orders', icon: Receipt },
@@ -262,6 +256,8 @@ const AdminLayout = ({ children }) => {
   ];
 
   const additionalPages = [
+    { label: 'Upcoming Banners', path: '/india/admin/upcoming-banners', icon: Layers },
+    { label: 'Hero Images', path: '/india/admin/hero-images', icon: Image },
     { label: 'Settings', path: '/india/admin/settings', icon: Settings },
     { label: 'Testimonials', path: '/india/admin/testimonials', icon: Heart },
     { label: 'Page Config (JSON)', path: '/india/admin/page-config', icon: Grid },

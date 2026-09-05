@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight, Check, Zap, Sparkles, Shield, Heart, Eye,
   ShoppingCart, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Star, BookOpen,
   Monitor, Palette, Twitter, Github, Globe, Mail, Clock, Download, CheckCircle2,
-  TrendingUp, Headphones, X, Phone, Search, Bot, Brain, Cpu, Wand2
+  TrendingUp, Headphones, X, Phone, Search, Bot, Brain, Cpu, Wand2, Folder, Loader2, Hash,
+  Pause, Play, Cloud, ShieldCheck, FileCheck, Layers, Smartphone, Lock
 } from 'lucide-react';
 import client, { API_BASE_URL } from '../api/client';
 import { useWatchlist } from '../context/WatchlistContext';
@@ -13,11 +14,51 @@ import { useSiteSettings } from '../context/SiteSettingsContext';
 import { useAuth } from '../context/AuthContext';
 import LivePreviewModal from '../components/common/LivePreviewModal';
 
+const defaultUpcomingReleases = [
+  {
+    id: 'digilocker-banner-1',
+    title: 'Your Documents, Always accessible',
+    bannerImage: 'https://cdn.digilocker.gov.in/digilocker-landing-page/assets/img/banner/web-banner-1.jpg',
+    badge: 'DigiLocker Ecosystem • Digital India',
+    headline: 'Your Documents, Always Accessible',
+    subtitle: 'Access, share and instantly verify government-issued documents, certificates, and digital records anytime, anywhere.',
+    link: '/products'
+  },
+  {
+    id: 'digilocker-banner-2',
+    title: 'Now drive hassle-free with Digilocker',
+    bannerImage: 'https://cdn.digilocker.gov.in/digilocker-landing-page/assets/img/banner/web-banner-2.jpg',
+    badge: 'Ministry of Road Transport & Highways',
+    headline: 'Now Drive Hassle-Free with DigiLocker',
+    subtitle: 'Carry your digital Driving Licence and Vehicle RC legally valid across India on your mobile device.',
+    link: '/products'
+  },
+  {
+    id: 'digilocker-banner-3',
+    title: 'Indian Railways accept Digilocker as valid ID',
+    bannerImage: 'https://cdn.digilocker.gov.in/digilocker-landing-page/assets/img/banner/web-banner-3.jpg',
+    badge: 'Indian Railways & Digital ID',
+    headline: 'Indian Railways Accept DigiLocker as Valid ID',
+    subtitle: 'Seamless identity verification during train journeys with digitally signed government credentials.',
+    link: '/products'
+  },
+  {
+    id: 'digilocker-banner-4',
+    title: 'Airport entry get more easier now',
+    bannerImage: 'https://cdn.digilocker.gov.in/digilocker-landing-page/assets/img/banner/web-banner-4.jpg',
+    badge: 'DigiYatra • Ministry of Civil Aviation',
+    headline: 'Airport Entry Made Faster & Seamless with DigiYatra',
+    subtitle: 'Facial recognition and digital credentials for paperless airport terminal entries across major Indian airports.',
+    link: '/products'
+  }
+];
+
 const categoryMeta = {
   'templates': { icon: Palette, color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
   'ui-kits': { icon: Cpu, color: 'bg-orange-500/10 text-orange-600 border-orange-200' },
   'ai-kits': { icon: Bot, color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200' },
-  'ai-tools': { icon: Brain, color: 'bg-blue-500/10 text-blue-600 border-blue-200' }
+  'ai-tools': { icon: Brain, color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
+  'portfolio': { icon: Monitor, color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' }
 };
 
 const popularTags = [
@@ -179,6 +220,7 @@ const renderHeroHeadline = (headline, highlight) => {
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [selectedCategoryTab, setSelectedCategoryTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -189,6 +231,48 @@ const Home = () => {
   const [openFaq, setOpenFaq] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
 
+  // Services Section Search & Category Filter State
+  const [serviceSearchQuery, setServiceSearchQuery] = useState('');
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState('all');
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const serviceDropdownRef = useRef(null);
+
+  // Upcoming Products Carousel State (Auto-cycles every 8s)
+  const [upcomingReleases, setUpcomingReleases] = useState(defaultUpcomingReleases);
+  const [upcomingIndex, setUpcomingIndex] = useState(0);
+  const [isUpcomingPaused, setIsUpcomingPaused] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+
+  useEffect(() => {
+    client.get('/api/public/upcoming-banners', { silent: true })
+      .then((res) => {
+        if (res?.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setUpcomingReleases(res.data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (isUpcomingPaused || !upcomingReleases.length) return;
+    const timer = setInterval(() => {
+      setUpcomingIndex(prev => (prev + 1) % upcomingReleases.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [isUpcomingPaused, upcomingReleases.length]);
+
+  const currentUpcoming = upcomingReleases[upcomingIndex] || upcomingReleases[0] || defaultUpcomingReleases[0];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target)) {
+        setServiceDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const categoryScrollRef = useRef(null);
 
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
@@ -198,9 +282,6 @@ const Home = () => {
   const heroData = siteSettings?.hero && Object.keys(siteSettings.hero).length > 0
     ? siteSettings.hero
     : defaultHero;
-  const services = (siteSettings?.services && Array.isArray(siteSettings.services))
-    ? siteSettings.services.filter(s => s.visible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
-    : [];
   const { openAuthModal, user, openBookingModal } = useAuth();
 
   const handleAddToCart = (product) => {
@@ -238,12 +319,34 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    // 1. Fetch categories right away with high priority so cards load instantly
+    setCategoriesLoading(true);
+    client.get('/api/public/categories', { silent: true })
+      .then((res) => {
+        if (res?.data?.success && Array.isArray(res.data.data)) {
+          const seen = new Set();
+          const unique = res.data.data.filter(cat => {
+            const key = String(cat._id);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setCategories(unique.sort((a, b) => (a.order || 0) - (b.order || 0)));
+        }
+      })
+      .catch(() => {
+        // Quiet fallback
+      })
+      .finally(() => {
+        setCategoriesLoading(false);
+      });
+
+    // 2. Fetch products and testimonials
+    const fetchOtherData = async () => {
       setLoading(true);
       try {
-        const [productsRes, categoriesRes, testimonialsRes] = await Promise.allSettled([
+        const [productsRes, testimonialsRes] = await Promise.allSettled([
           client.get('/api/public/products?limit=20', { silent: true }),
-          client.get('/api/public/categories', { silent: true }),
           client.get('/api/public/testimonials', { silent: true })
         ]);
 
@@ -269,21 +372,18 @@ const Home = () => {
           }, 2000);
         }
 
-        if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data?.success && Array.isArray(categoriesRes.value.data.data)) {
-          setCategories(categoriesRes.value.data.data);
-        }
-
         if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value?.data?.success && Array.isArray(testimonialsRes.value.data.data)) {
           setDynamicTestimonials(testimonialsRes.value.data.data);
         }
+
       } catch (err) {
-        console.warn('Home data fetch failed:', err);
+        // Fallback gracefully
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchOtherData();
   }, []);
 
   const toggleFaq = (index) => {
@@ -306,8 +406,11 @@ const Home = () => {
 
   // Filter products by category and deep multi-attribute search query (Name, Category, Price, Tech Stack, Features)
   const filteredProducts = products.filter(product => {
+    const prodCatSlug = product.categoryId?.slug || (typeof product.category === 'string' ? product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '');
+    const prodCatName = product.categoryId?.name || product.category || '';
     const matchesCategory = selectedCategoryTab === 'all' || 
-      (product.categoryId?.slug || product.category) === selectedCategoryTab;
+      prodCatSlug === selectedCategoryTab ||
+      prodCatName.toLowerCase() === selectedCategoryTab.toLowerCase();
 
     if (!searchQuery.trim()) return matchesCategory;
 
@@ -321,7 +424,7 @@ const Home = () => {
 
     // 2. Category Name or Slug
     const categoryName = product.categoryId?.name || product.category || '';
-    const categorySlug = product.categoryId?.slug || product.category || '';
+    const categorySlug = product.categoryId?.slug || '';
     const matchCategory = categoryName.toLowerCase().includes(q) || categorySlug.toLowerCase().includes(q);
 
     // 3. Price (numeric & text comparison e.g. 999, free)
@@ -353,7 +456,48 @@ const Home = () => {
     return (b.downloadsCount || b.viewsCount || 0) - (a.downloadsCount || a.viewsCount || 0);
   });
 
-  const gridProducts = sortedProducts.filter(p => p.slug !== 'superui-admin-dashboard');
+  const gridProducts = sortedProducts
+    .filter(p => p.slug !== 'superui-admin-dashboard')
+    .filter(p => {
+      if (!productSearch) return true;
+      const q = productSearch.toLowerCase();
+      return (p.name || '').toLowerCase().includes(q) ||
+             (p.shortDescription || p.description || '').toLowerCase().includes(q) ||
+             (p.category || '').toLowerCase().includes(q);
+    });
+
+  // Memoized categories & filtered services for the Services We Offer section
+  const visibleCategories = useMemo(() => {
+    return categories.filter(c => c.visible !== false);
+  }, [categories]);
+
+  const filteredServiceCategories = useMemo(() => {
+    return visibleCategories.filter(cat => {
+      const matchesCat =
+        selectedServiceCategory === 'all' ||
+        cat._id === selectedServiceCategory ||
+        cat.slug === selectedServiceCategory;
+      if (!matchesCat) return false;
+
+      if (!serviceSearchQuery.trim()) return true;
+      const q = serviceSearchQuery.trim().toLowerCase();
+      const nameMatch = cat.name && cat.name.toLowerCase().includes(q);
+      const descMatch = cat.description && cat.description.toLowerCase().includes(q);
+      const slugMatch = cat.slug && cat.slug.toLowerCase().includes(q);
+
+      return nameMatch || descMatch || slugMatch;
+    });
+  }, [visibleCategories, selectedServiceCategory, serviceSearchQuery]);
+
+  const activeServiceCategoryObj = visibleCategories.find(
+    c => c._id === selectedServiceCategory || c.slug === selectedServiceCategory
+  );
+  const activeCategoryLabel = activeServiceCategoryObj ? activeServiceCategoryObj.name : 'All Categories';
+
+  const totalProductsCount = useMemo(() => {
+    const catSum = visibleCategories.reduce((acc, cat) => acc + (cat.productCount || 0), 0);
+    return Math.max(catSum, products.length);
+  }, [visibleCategories, products]);
 
   return (
     <div className="bg-[#FAFAFA] min-h-screen text-neutral-900 selection:bg-brand-500 selection:text-white font-sans antialiased">
@@ -524,349 +668,293 @@ const Home = () => {
         </div>
       </section>
 
+   
 
-
-
-
-      {/* REAL DB PRODUCT CARDS GRID SECTION */}
-      <section className="py-12 sm:py-16">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          
-          {/* Header Row */}
-          <div className="flex flex-row items-center justify-between mb-8 gap-4 flex-wrap">
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-600 flex items-center gap-1.5">
-                <Cpu className="h-3.5 w-3.5" />
-                <span>Verified Store Catalog</span>
-              </h2>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-neutral-900 mt-1">
-                Explore Digital Products ({gridProducts.length})
-              </p>
-            </div>
-            <Link
-              to="/products"
-              className="text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 flex items-center gap-1.5 px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:shadow-brand-500/25 active:scale-95 transition-all duration-200 shrink-0 group border border-brand-500/30"
-            >
-              <span>View Full Store Catalog</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          {/* Centered Pill Search Bar (Matching Reference Image media_1788319281942.png) */}
-          <div className="mb-12 max-w-3xl mx-auto relative group">
-            {/* Outer Glow */}
-            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-500/20 via-orange-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
-            
-            <div className="relative flex items-center bg-white rounded-full border border-neutral-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] group-focus-within:border-brand-500 group-focus-within:bg-white group-focus-within:ring-4 group-focus-within:ring-brand-500/10 transition-all p-1.5 pl-6 sm:pl-8">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="What type of design are you interested in?"
-                className="w-full bg-transparent text-sm sm:text-base font-medium text-neutral-800 placeholder:text-neutral-400 focus:outline-none pr-4"
-              />
-              
-              <div className="flex items-center space-x-2 shrink-0">
-                {searchQuery.trim() && (
-                  <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-[10px] font-extrabold border border-brand-200 shrink-0">
-                    {filteredProducts.length} Match
-                  </span>
-                )}
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="p-1.5 text-neutral-400 hover:text-neutral-700 rounded-full hover:bg-neutral-200/60 transition-colors mr-1"
-                    title="Clear Search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-
-                {/* Circular Orange Magnifying Glass Search Button */}
-                <button
-                  type="button"
-                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#ff5100] hover:bg-[#e64d00] text-white flex items-center justify-center shadow-md shadow-orange-500/30 hover:scale-105 transition-all shrink-0 cursor-pointer"
-                  title="Search"
-                >
-                  <Search className="h-5 w-5 stroke-[2.5]" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-600"></div>
-            </div>
-          ) : gridProducts.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-3xl border border-neutral-200 p-8 space-y-3">
-              <p className="text-base font-bold text-neutral-900">No store products match your filter.</p>
-              <p className="text-xs text-neutral-500">Try selecting "All Assets".</p>
-              <button
-                onClick={() => setSelectedCategoryTab('all')}
-                className="px-5 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold"
-              >
-                Reset Filters
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Product Grid (Exactly 12 cards per page, 3 cards per row max) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {(() => {
-                  const totalPages = Math.ceil(gridProducts.length / itemsPerPage);
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const paginatedProducts = gridProducts.slice(startIndex, startIndex + itemsPerPage);
-
-                   return paginatedProducts.map((product, idx) => {
-                     const watched = isInWatchlist(product._id);
-                     const categoryName = product.categoryId?.name || 'Digital Asset';
-                     const discount = product.compareAtPrice && product.compareAtPrice > product.price
-                       ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
-                       : 0;
-
-                     return (
-                       <div
-                         key={product._id || idx}
-                         className="group bg-white rounded-2xl border border-neutral-200/80 overflow-hidden hover:border-brand-200 hover:shadow-xl transition-all duration-300 flex flex-col"
-                       >
-                         {/* Product Thumbnail */}
-                         <div className="relative aspect-[16/11] overflow-hidden bg-neutral-100">
-                           <img
-                             src={product.thumbnail?.url || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'}
-                             alt={product.name}
-                             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                           />
-                           
-                           {/* Category Badge */}
-                           <div className="absolute top-3 left-3">
-                             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold text-neutral-700 shadow-sm">
-                               {categoryName}
-                             </span>
-                           </div>
-
-                           {/* Action Stack: Wishlist Button + Preview Eye Icon (Directly Bottom) */}
-                           <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-                             <button
-                               type="button"
-                               onClick={() => {
-                                 if (!user) {
-                                   openAuthModal('login');
-                                 } else {
-                                   toggleWatchlist(product._id);
-                                 }
-                               }}
-                               className={`p-2 rounded-full backdrop-blur-md shadow-sm transition-all transform hover:scale-110 ${
-                                 watched
-                                   ? 'bg-red-50 text-red-600 border border-red-200'
-                                   : 'bg-white/90 text-neutral-600 hover:text-red-600 border border-neutral-200/80 hover:bg-white'
-                               }`}
-                               title={watched ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                             >
-                               <Heart className={`h-3.5 w-3.5 ${watched ? 'fill-current' : ''}`} />
-                             </button>
-
-                             <button
-                               type="button"
-                               onClick={() => setPreviewProduct(product)}
-                               className="p-2 rounded-full bg-white/90 hover:bg-neutral-900 text-neutral-700 hover:text-white border border-neutral-200/80 backdrop-blur-md shadow-sm transition-all transform hover:scale-110"
-                               title="Website Full View Live Preview"
-                             >
-                               <Eye className="h-3.5 w-3.5" />
-                             </button>
-                           </div>
-                         </div>
-
-                         {/* Card Content */}
-                         <div className="p-5 flex flex-col flex-1">
-                           <Link to={`/products/${product.slug}`} className="block mb-2">
-                             <h3 className="text-sm font-bold text-neutral-900 line-clamp-1 group-hover:text-brand-600 transition-colors">
-                               {product.name}
-                             </h3>
-                           </Link>
-
-                           <p className="text-[11px] text-neutral-500 line-clamp-2 leading-relaxed mb-4 flex-1">
-                             {product.shortDescription || 'Production ready digital asset template for developers.'}
-                           </p>
-
-                           {/* Price Section */}
-                           <div className="flex items-center justify-between mb-4">
-                             <div className="flex items-baseline gap-2">
-                               <span className="text-base font-extrabold text-neutral-900">
-                                 ₹{(product.price || product.sellingPrice || 1499).toLocaleString()}
-                               </span>
-                               {product.compareAtPrice && product.compareAtPrice > (product.price || product.sellingPrice) && (
-                                 <span className="text-[11px] text-neutral-400 line-through">
-                                   ₹{product.compareAtPrice.toLocaleString()}
-                                 </span>
-                               )}
-                             </div>
-                             {discount > 0 && (
-                               <span className="text-[10px] font-extrabold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">
-                                 {discount}% OFF
-                               </span>
-                             )}
-                           </div>
-
-                           {/* Action Buttons */}
-                           <div className="flex items-center gap-2">
-                             {product.preview?.url && (
-                               <a
-                                 href={product.preview.url}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-bold transition-all"
-                               >
-                                 <span>Preview</span>
-                               </a>
-                             )}
-                              <button
-                                onClick={() => handleAddToCart(product)}
-                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all"
-                              >
-                                <ShoppingCart className="h-3.5 w-3.5" />
-                                <span>Add</span>
-                              </button>
-                              <button
-                                onClick={() => handleBuyNow(product)}
-                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#ff5100] hover:bg-[#e64d00] text-white text-xs font-bold transition-all shadow-sm"
-                              >
-                                <span>Buy Now</span>
-                              </button>
-                           </div>
-                         </div>
-                       </div>
-                     );
-                   });
-                })()}
-              </div>
-
-              {/* Pagination Controls Bar (12 cards per page) */}
-              {(() => {
-                const totalPages = Math.ceil(gridProducts.length / itemsPerPage);
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = Math.min(startIndex + itemsPerPage, gridProducts.length);
-
-                if (totalPages <= 1) return null;
-
-                return (
-                  <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-neutral-200/80">
-                     <p className="text-xs font-semibold text-neutral-500">
-                       Showing <span className="font-bold text-neutral-900">{startIndex + 1}</span>–<span className="font-bold text-neutral-900">{endIndex}</span> of <span className="font-bold text-neutral-900">{gridProducts.length}</span> products
-                     </p>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-neutral-700 disabled:hover:border-neutral-200 transition-all shadow-sm cursor-pointer"
-                      >
-                        Previous
-                      </button>
-
-                      {[...Array(totalPages)].map((_, i) => {
-                        const pageNum = i + 1;
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`h-9 w-9 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer ${
-                              currentPage === pageNum
-                                ? 'bg-brand-600 text-white shadow-md shadow-brand-500/25 font-black scale-105'
-                                : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-neutral-700 disabled:hover:border-neutral-200 transition-all shadow-sm cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* SERVICES WE OFFER SECTION (Matching user pattern same-to-same) */}
+      {/* Services Categories Section (New Pattern: Unified Search, Dropdown Filter & Book Call) */}
       <section className="py-20 bg-white border-t border-neutral-200/80">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          
-          <div className="space-y-3 w-[90%] mx-auto">
+        <div className="mx-auto w-full max-w-7xl min-[1600px]:max-w-[1680px] px-4 sm:px-6 lg:px-8 space-y-8">
+
+          {/* Section Header */}
+          <div className="text-center space-y-3 w-[90%] max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/70 text-brand-600 text-xs font-bold shadow-xs">
+              <Zap className="h-3.5 w-3.5 fill-brand-500 text-brand-600" />
+              <span>Full-Stack Development & Digital Engineering</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
               Services <span className="font-medium text-neutral-500">We Offer</span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-md mx-auto font-bold leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-lg mx-auto font-medium leading-relaxed">
               From first click to final conversion, every service is built around one goal: growing your business.
             </p>
-            <div className="pt-3">
+          </div>
+
+          {/* Modern Unified Filter & Search Bar Toolbar */}
+          <div className="max-w-6xl min-[1600px]:max-w-[1600px] mx-auto w-full">
+            <div className="p-2 sm:p-2.5 rounded-3xl bg-neutral-50 border border-neutral-200/90 shadow-sm flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+
+              {/* 1. Category Custom Dropdown Selector */}
+              <div className="relative shrink-0" ref={serviceDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
+                  className="w-full md:w-auto inline-flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold shadow-sm transition-all duration-200 border border-neutral-800 min-w-[210px] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Folder className="h-4 w-4 text-brand-400 shrink-0" />
+                    <span className="truncate">{activeCategoryLabel}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-1">
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-[10px] text-neutral-300 font-semibold border border-neutral-700">
+                      {selectedServiceCategory === 'all' ? visibleCategories.length : filteredServiceCategories.length}
+                    </span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 text-neutral-400 ${serviceDropdownOpen ? 'rotate-180 text-brand-400' : ''}`} />
+                  </div>
+                </button>
+
+                {/* Popover Dropdown Panel */}
+                {serviceDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-72 bg-white rounded-2xl border border-neutral-200/90 shadow-2xl z-40 p-2 animate-fadeIn space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedServiceCategory('all');
+                        setServiceDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                        selectedServiceCategory === 'all'
+                          ? 'bg-brand-50 text-brand-700 font-bold'
+                          : 'text-neutral-700 hover:bg-neutral-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Folder className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span>All Categories</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-neutral-400 font-mono font-medium">({visibleCategories.length})</span>
+                        {selectedServiceCategory === 'all' && <Check className="h-3.5 w-3.5 text-brand-600" />}
+                      </div>
+                    </button>
+
+                    <div className="h-px bg-neutral-100 my-1" />
+
+                    <div className="max-h-60 overflow-y-auto space-y-0.5 pr-0.5">
+                      {visibleCategories.map((cat) => {
+                        const isSelected = selectedServiceCategory === cat._id || selectedServiceCategory === cat.slug;
+                        return (
+                          <button
+                            key={cat._id || cat.slug}
+                            type="button"
+                            onClick={() => {
+                              setSelectedServiceCategory(cat._id || cat.slug);
+                              setServiceDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                              isSelected
+                                ? 'bg-brand-50 text-brand-700 font-bold'
+                                : 'text-neutral-700 hover:bg-neutral-100'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 truncate">
+                              <div
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: cat.color || '#F97316' }}
+                              />
+                              <span className="truncate">{cat.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                              <span className="text-[10px] text-neutral-400 font-mono font-medium">
+                                ({cat.productCount ?? 0})
+                              </span>
+                              {isSelected && <Check className="h-3.5 w-3.5 text-brand-600" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Live Search Input Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search services (e.g. landing page, mobile app, SaaS, AI...)"
+                  value={serviceSearchQuery}
+                  onChange={(e) => setServiceSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white border border-neutral-200/90 text-xs sm:text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all font-medium shadow-xs"
+                />
+                {serviceSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setServiceSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* 3. Book a Free Call Action Button */}
               <button
                 onClick={openBookingModal}
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-brand-500/20 transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-brand-500/20 transition-all duration-200 shrink-0 cursor-pointer group"
               >
                 <Phone className="h-3.5 w-3.5 text-white fill-current shrink-0" />
                 <span>Book a Free Call</span>
-                <div className="p-1 rounded-full bg-white/20">
+                <div className="p-1 rounded-full bg-white/20 group-hover:rotate-45 transition-transform duration-200">
                   <ArrowRight className="h-3 w-3 text-white rotate-[-45deg]" />
                 </div>
               </button>
             </div>
+
+            {/* Active Filters & Results Counter Strip */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 px-2 text-xs">
+              <span className="text-neutral-500 font-semibold">
+                Showing <strong className="text-neutral-900 font-extrabold">{filteredServiceCategories.length}</strong> of {visibleCategories.length} services
+              </span>
+
+              {(selectedServiceCategory !== 'all' || serviceSearchQuery.trim()) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-neutral-400 font-semibold">Active:</span>
+
+                  {selectedServiceCategory !== 'all' && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-[11px] font-bold">
+                      <span>Category: {activeCategoryLabel}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedServiceCategory('all')}
+                        className="hover:text-brand-900 rounded-full p-0.5 cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+
+                  {serviceSearchQuery.trim() && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 text-[11px] font-bold">
+                      <span>Search: &ldquo;{serviceSearchQuery}&rdquo;</span>
+                      <button
+                        type="button"
+                        onClick={() => setServiceSearchQuery('')}
+                        className="hover:text-neutral-900 rounded-full p-0.5 cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedServiceCategory('all');
+                      setServiceSearchQuery('');
+                    }}
+                    className="text-[11px] font-bold text-neutral-500 hover:text-neutral-900 underline ml-1 cursor-pointer"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {services.length === 0 ? (
+          {/* Cards Area: Loading, Empty, or Filtered Grid */}
+          {categoriesLoading ? (
+            <div className="py-12 space-y-6">
+              <div className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-600 text-xs font-bold shadow-sm mx-auto">
+                <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
+                <span>Loading services & categories...</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1600px]:grid-cols-4 gap-6 max-w-6xl min-[1600px]:max-w-[1600px] mx-auto pt-2 justify-center sm:justify-items-center">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="relative h-[340px] rounded-3xl overflow-hidden max-w-sm w-full bg-neutral-100 border border-neutral-200/70 shadow-sm animate-pulse flex flex-col justify-end p-6 space-y-3"
+                  >
+                    <div className="h-7 w-7 rounded-full bg-neutral-200" />
+                    <div className="h-5 w-3/4 rounded-lg bg-neutral-200" />
+                    <div className="h-3.5 w-full rounded-md bg-neutral-200" />
+                    <div className="h-3.5 w-2/3 rounded-md bg-neutral-200" />
+                    <div className="h-9 w-32 rounded-xl bg-neutral-200 mt-2" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : visibleCategories.length === 0 ? (
             <div className="text-center py-16 text-neutral-400 text-sm font-medium">
               No services configured yet.
             </div>
+          ) : filteredServiceCategories.length === 0 ? (
+            <div className="text-center py-20 px-4 rounded-3xl bg-neutral-50/70 border border-neutral-200/80 max-w-2xl mx-auto space-y-4">
+              <div className="h-12 w-12 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto text-neutral-400">
+                <Search className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">No services match your search</h3>
+                <p className="text-xs text-neutral-500 mt-1">
+                  We couldn&apos;t find any service matching your criteria. Try another keyword or clear filters.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedServiceCategory('all');
+                  setServiceSearchQuery('');
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                <span>Reset All Filters</span>
+              </button>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left max-w-6xl mx-auto pt-8">
-              {services.map((service, idx) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-[1600px]:grid-cols-4 gap-6 text-left max-w-6xl min-[1600px]:max-w-[1600px] mx-auto pt-4 justify-center sm:justify-items-center">
+              {filteredServiceCategories.map((cat, idx) => (
                 <div
-                  key={service._id || idx}
-                  onClick={() => navigate(`/services/${service.slug || service._id}`)}
-                  className="group relative h-[340px] rounded-3xl overflow-hidden cursor-pointer block border border-neutral-200/60 shadow-sm hover:shadow-2xl hover:shadow-neutral-300/40 hover:border-neutral-300/80 transition-all duration-500"
+                  key={cat._id || idx}
+                  onClick={() => navigate(`/products?category=${cat.slug || cat._id}`)}
+                  className="group relative h-[340px] rounded-3xl overflow-hidden cursor-pointer block max-w-sm w-full border border-neutral-200/60 shadow-sm hover:shadow-2xl hover:shadow-neutral-300/40 hover:border-neutral-300/80 transition-all duration-500"
                 >
-                  {/* Image */}
-                  <img
-                    src={service.bgImage || service.image}
-                    alt={service.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=No+Image'; }}
-                  />
+                  {cat.icon ? (
+                    <img
+                      src={cat.icon}
+                      alt={cat.name}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=No+Image'; }}
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 h-full w-full transition-transform duration-700 group-hover:scale-105"
+                      style={{ backgroundColor: cat.color || '#6B7280' }}
+                    />
+                  )}
                   {/* Gradient overlay - deeper at top for readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/5" />
                   {/* Top accent line */}
                   <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-500 via-orange-400 to-purple-500 opacity-80 group-hover:opacity-100 transition-opacity" />
                   {/* Content */}
                   <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                    {/* Service number badge */}
+                    {/* Product count badge */}
                     <div className="mb-3">
                       <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[10px] font-extrabold text-white">
-                        {String(idx + 1).padStart(2, '0')}
+                        {cat.productCount ?? 0}
                       </span>
                     </div>
                     <h3 className="text-base font-extrabold text-white mb-1.5 tracking-tight leading-tight">
-                      {service.title}
+                      {cat.name}
                     </h3>
                     <p className="text-[11px] text-white/75 font-medium leading-relaxed line-clamp-2 mb-4">
-                      {service.description}
+                      {cat.description || 'No description added.'}
                     </p>
-                    {/* Glass effect CTA button to dedicated Service Detail page */}
+                    {/* Glass effect CTA button */}
                     <Link
-                      to={`/services/${service.slug || service._id}`}
+                      to={`/products?category=${cat.slug || cat._id}`}
                       onClick={(e) => e.stopPropagation()}
                       className="inline-flex items-center gap-2 text-[11px] font-bold text-white bg-white/15 backdrop-blur-sm border border-white/20 px-4 py-2.5 rounded-xl w-fit group-hover:bg-white/25 group-hover:border-white/40 transition-all duration-300"
                     >
-                      <span>View Service Detail</span>
+                      <span>View Products</span>
                       <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                   </div>
@@ -876,7 +964,12 @@ const Home = () => {
               ))}
             </div>
           )}
+        </div>
+      </section>
 
+      {/* Pricing Section */}
+      <section className="py-20 bg-white border-t border-neutral-200/80">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
           {/* Pricing Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto pt-6">
             
@@ -887,7 +980,7 @@ const Home = () => {
                 return (
                   <div 
                     key={plan.id}
-                    className={`lg:col-span-6 bg-white p-8 rounded-2xl space-y-6 relative overflow-hidden text-left ${
+                    className={`lg:col-span-6 h-full flex flex-col bg-white p-8 rounded-2xl space-y-6 relative overflow-hidden text-left ${
                       plan.isFeatured 
                         ? 'border-2 border-brand-500/30 shadow-md' 
                         : 'border border-neutral-200/85 shadow-sm'
@@ -930,7 +1023,7 @@ const Home = () => {
                       </div>
                     </div>
 
-                    <div className="pt-6 border-t border-neutral-100 space-y-4">
+                    <div className="pt-6 border-t border-neutral-100 space-y-4 flex-1">
                       <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400">
                         {plan.isFeatured ? 'Everything in LP, plus:' : 'What you get?'}
                       </h4>
@@ -1007,6 +1100,233 @@ const Home = () => {
           </div>
 
         </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* PREVIOUS UPCOMING SHOWCASE CODE (PRESERVED AS COMMENTS AS REQUESTED): */}
+      {/*
+      <section className="py-16 bg-gradient-to-b from-white via-indigo-50/20 to-[#FAFAFA] border-t border-neutral-200/80 overflow-hidden">
+        <div className="mx-auto w-full max-w-7xl min-[1600px]:max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-[32px] sm:rounded-[36px] bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/60 border border-indigo-100/90 shadow-[0_25px_70px_-15px_rgba(99,102,241,0.12)] p-6 sm:p-10 lg:p-14 overflow-hidden">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+              <div className="lg:col-span-6 space-y-6 text-left">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold shadow-xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600" />
+                  </span>
+                  <span>{currentUpcoming.badge}</span>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-900 tracking-tight leading-[1.15]">
+                    {currentUpcoming.headline.split(currentUpcoming.highlightText)[0]}
+                    <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-brand-600 bg-clip-text text-transparent">
+                      {currentUpcoming.highlightText}
+                    </span>
+                    {currentUpcoming.headline.split(currentUpcoming.highlightText)[1]}
+                  </h2>
+                  <p className="text-sm sm:text-base text-neutral-600 font-medium leading-relaxed max-w-xl">
+                    {currentUpcoming.subtitle}
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-indigo-100/80 flex flex-wrap items-center gap-6 sm:gap-8">
+                  {currentUpcoming.features.map((feat, fIdx) => {
+                    const FeatIcon = feat.icon;
+                    return (
+                      <div key={fIdx} className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-white border border-indigo-100 shadow-sm flex items-center justify-center text-indigo-600 shrink-0">
+                          <FeatIcon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-neutral-900">{feat.title}</h4>
+                          <p className="text-[11px] text-neutral-500 font-medium">{feat.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      */}
+      {/* ========================================================================= */}
+
+      {/* ========================================================================= */}
+      {/* PREVIOUS MULTI-CARD UPCOMING SHOWCASE CODE (PRESERVED AS COMMENTS AS REQUESTED):
+      <section className="py-20 bg-gradient-to-b from-white via-indigo-50/25 to-[#FAFAFA] border-t border-neutral-200/80 overflow-hidden relative">
+        <div className="mx-auto w-full max-w-7xl min-[1600px]:max-w-[1680px] px-4 sm:px-6 lg:px-8 mb-10 text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold shadow-xs">
+            <Sparkles className="h-3.5 w-3.5 fill-indigo-500 text-indigo-600" />
+            <span>Q1 2026 ROADMAP • EXCLUSIVE SNEAK PEEK</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
+            Upcoming <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-brand-600 bg-clip-text text-transparent">Products</span>
+          </h2>
+          <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-2xl mx-auto font-medium leading-relaxed">
+            Explore our next generation of high-converting SaaS templates, AI agentic automations, and mobile ecosystems before official release.
+          </p>
+        </div>
+      </section>
+      */}
+      {/* ========================================================================= */}
+
+      {/* NEW DIGILOCKER (https://www.digilocker.gov.in/) HERO SECTION CAROUSEL FOR UPCOMING PRODUCTS */}
+      <section className="py-16 sm:py-20 bg-gradient-to-b from-[#F8FAFC] via-white to-[#F8FAFC] border-y border-neutral-200/80 overflow-hidden relative select-none shadow-xs">
+        
+        {/* Section Heading */}
+        <div className="mx-auto w-full max-w-7xl min-[1600px]:max-w-[1680px] px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10 text-center space-y-2.5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50/90 border border-orange-200 text-neon-orange text-xs font-bold shadow-xs">
+            <Sparkles className="h-3.5 w-3.5 fill-neon-orange text-neon-orange" />
+            <span>DIGILOCKER INSPIRED • UPCOMING ROADMAP 2026</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
+            Upcoming <span className="text-neon-orange">Products</span>
+          </h2>
+          <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-2xl mx-auto font-medium leading-relaxed">
+            Explore our next generation of high-converting SaaS templates, AI agentic automations, and mobile ecosystems before official release.
+          </p>
+        </div>
+
+        {/* DigiLocker Style Peek Section Container */}
+        <div className="relative w-full overflow-hidden px-2 sm:px-6 lg:px-8">
+          
+          {/* Dynamic Ambient Background Blur Glow (Uses Active Banner Image) */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85vw] h-[40vw] max-w-[1200px] max-h-[480px] rounded-[40px] blur-[100px] pointer-events-none transition-all duration-700 z-0 opacity-40 overflow-hidden">
+            <img 
+              src={currentUpcoming.bannerImage} 
+              alt={currentUpcoming.title} 
+              className="w-full h-full object-cover scale-125"
+            />
+          </div>
+
+          {/* Panoramic Swiper Stage with Left & Right Peeking Full-Image Slides */}
+          <div className="relative z-10 flex items-center justify-center gap-4 sm:gap-6 max-w-[1640px] mx-auto min-h-[220px] sm:min-h-[380px] md:min-h-[450px]">
+            
+            {/* 1. PREVIOUS PEEKING FULL-IMAGE BANNER (Left Side) */}
+            {(() => {
+              const prevIdx = (upcomingIndex - 1 + upcomingReleases.length) % upcomingReleases.length;
+              const prevItem = upcomingReleases[prevIdx];
+              return (
+                <div
+                  key={`prev-dl-${prevIdx}`}
+                  onClick={() => setUpcomingIndex(prevIdx)}
+                  className="hidden lg:block w-[72vw] max-w-[1100px] -ml-[58%] xl:-ml-[43%] shrink-0 opacity-40 hover:opacity-75 scale-[0.92] blur-[0.5px] rounded-2xl sm:rounded-[32px] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden transition-all duration-700 cursor-pointer aspect-[21/9] bg-neutral-900"
+                  title="Click to view previous banner"
+                >
+                  <img 
+                    src={prevItem.bannerImage} 
+                    alt={prevItem.title} 
+                    className="w-full h-full object-cover select-none pointer-events-none"
+                    loading="lazy"
+                  />
+                </div>
+              );
+            })()}
+
+            {/* 2. ACTIVE CENTER FULL-IMAGE BANNER */}
+            <div className="w-[96vw] sm:w-[92vw] max-w-[1180px] shrink-0 rounded-2xl sm:rounded-[32px] shadow-[0_30px_90px_-20px_rgba(0,0,0,0.42),0_12px_32px_-10px_rgba(0,0,0,0.2)] ring-1 ring-black/10 border border-white/40 overflow-hidden relative z-20 transition-all duration-700 aspect-[21/9] bg-neutral-900 group">
+              <Link to={currentUpcoming.link || '/products'} className="block w-full h-full relative">
+                <img 
+                  src={currentUpcoming.bannerImage} 
+                  alt={currentUpcoming.title} 
+                  className="w-full h-full object-cover select-none transition-transform duration-700 group-hover:scale-[1.015]"
+                  loading="eager"
+                />
+                {/* Subtle bottom gradient overlay for control readability */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 via-black/15 to-transparent pointer-events-none" />
+              </Link>
+
+              {/* DigiLocker-Style Action Controls Floating Pill (< || >) */}
+              <div className="absolute bottom-4 right-4 sm:bottom-7 sm:right-7 z-30 flex items-center gap-1.5 sm:gap-2 bg-neutral-950/85 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-2xl">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setUpcomingIndex(prev => (prev - 1 + upcomingReleases.length) % upcomingReleases.length);
+                  }}
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                  title="Previous Slide"
+                >
+                  <ChevronLeft className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsUpcomingPaused(prev => !prev);
+                  }}
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                  title={isUpcomingPaused ? "Resume Carousel" : "Pause Carousel"}
+                >
+                  {isUpcomingPaused ? <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-300 fill-current ml-0.5" /> : <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setUpcomingIndex(prev => (prev + 1) % upcomingReleases.length);
+                  }}
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                  title="Next Slide"
+                >
+                  <ChevronRight className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                </button>
+              </div>
+
+              {/* Slide Indicator Dots (Bottom Left) */}
+              <div className="absolute bottom-4 left-4 sm:bottom-7 sm:left-7 z-30 flex items-center gap-1.5 sm:gap-2 bg-neutral-950/70 backdrop-blur-md px-3 sm:px-3.5 py-1.5 rounded-full border border-white/20 shadow-xl">
+                {upcomingReleases.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setUpcomingIndex(dotIdx);
+                    }}
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
+                      upcomingIndex === dotIdx
+                        ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-white shadow-sm'
+                        : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/70'
+                    }`}
+                    title={`Go to slide ${dotIdx + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* 3. NEXT PEEKING FULL-IMAGE BANNER (Right Side) */}
+            {(() => {
+              const nextIdx = (upcomingIndex + 1) % upcomingReleases.length;
+              const nextItem = upcomingReleases[nextIdx];
+              return (
+                <div
+                  key={`next-dl-${nextIdx}`}
+                  onClick={() => setUpcomingIndex(nextIdx)}
+                  className="hidden lg:block w-[72vw] max-w-[1100px] -mr-[58%] xl:-mr-[43%] shrink-0 opacity-40 hover:opacity-75 scale-[0.92] blur-[0.5px] rounded-2xl sm:rounded-[32px] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.3)] ring-1 ring-black/10 overflow-hidden transition-all duration-700 cursor-pointer aspect-[21/9] bg-neutral-900"
+                  title="Click to view next banner"
+                >
+                  <img 
+                    src={nextItem.bannerImage} 
+                    alt={nextItem.title} 
+                    className="w-full h-full object-cover select-none pointer-events-none"
+                    loading="lazy"
+                  />
+                </div>
+              );
+            })()}
+
+          </div>
+
+        </div>
+
       </section>
 
       {/* INFINITE SCROLLING TESTIMONIALS SECTION */}

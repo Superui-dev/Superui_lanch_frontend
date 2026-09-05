@@ -28,7 +28,7 @@ const MfaEnroll = () => {
       setEnrolling(false);
     } else {
       enrollMfa().catch(err => {
-        console.error('Enrollment failed:', err);
+        // Quiet fallback
         setError('Failed to generate QR code. Please try again.');
         setEnrolling(false);
       });
@@ -53,7 +53,7 @@ const MfaEnroll = () => {
     try {
       await verifyAndEnableMfa(code);
     } catch (err) {
-      console.error('MFA verification failed:', err);
+      // Quiet fallback
       setError(err.message || 'Invalid verification code. Access blocked.');
       setLoading(false);
     }

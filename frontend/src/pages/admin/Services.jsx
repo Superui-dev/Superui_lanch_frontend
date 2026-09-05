@@ -21,7 +21,7 @@ const ServicesAdmin = () => {
         setServices([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch services from DB4:', err);
+      // Quiet fallback
       setServices([]);
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ const ServicesAdmin = () => {
       try {
         await client.delete(`/api/admin/services/${serviceToDelete._id}`);
       } catch (err) {
-        console.warn('Failed to delete service by id:', err);
+        // Quiet fallback
       }
     }
     const updated = services.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i + 1 }));
@@ -98,7 +98,7 @@ const ServicesAdmin = () => {
               <span>Services Management</span>
             </h1>
             <p className={`${colors.textSecondary} text-sm mt-1`}>
-              Manage the "Services We Offer" section cards displayed on the homepage.
+              Manage service cards displayed on the homepage.
             </p>
           </div>
           <button

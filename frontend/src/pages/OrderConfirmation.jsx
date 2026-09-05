@@ -304,17 +304,17 @@ const OrderConfirmation = () => {
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3 text-xs border-t border-neutral-100 pt-3.5">
-                <Download className="h-4 w-4 text-brand-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-neutral-900">Instant Purchase Link</p>
-                  <p className="text-neutral-500 font-medium leading-relaxed">Access your digital asset files directly from the link below.</p>
-                  <Link to={`/download/${orderData?.order?._id}`} className="text-brand-600 hover:text-brand-700 font-bold mt-1.5 inline-flex items-center gap-1">
-                    <span>Instant Download Area</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
+               <div className="flex items-start space-x-3 text-xs border-t border-neutral-100 pt-3.5">
+                 <Download className="h-4 w-4 text-brand-600 shrink-0 mt-0.5" />
+                 <div>
+                   <p className="font-bold text-neutral-900">Instant Purchase Link</p>
+                   <p className="text-neutral-500 font-medium leading-relaxed">Access your digital asset files directly from the secure download link in your email, or from your account order history.</p>
+                   <Link to="/account/orders" className="text-brand-600 hover:text-brand-700 font-bold mt-1.5 inline-flex items-center gap-1">
+                     <span>View My Orders</span>
+                     <ArrowRight className="h-3.5 w-3.5" />
+                   </Link>
+                 </div>
+               </div>
             </div>
           )}
 

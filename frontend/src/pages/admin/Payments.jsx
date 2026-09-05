@@ -27,7 +27,7 @@ const Payments = () => {
         setPayments([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch payments:', err);
+      // Quiet fallback
       setPayments([]);
     } finally {
       setLoading(false);

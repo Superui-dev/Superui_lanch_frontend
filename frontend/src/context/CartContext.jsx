@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
         }
       }
     } catch (e) {
-      console.error('Error loading cart from storage', e);
+      // Storage read fallback
     }
   }, [storageKey]);
 
@@ -74,13 +74,13 @@ export const CartProvider = ({ children }) => {
                 quantity: item.quantity || 1
               }, { silent: true });
             } catch (e) {
-              console.warn('Failed to merge guest cart item:', e);
+              // Guest item merge fallback
             }
           }
         }
       }
     } catch (e) {
-      console.warn('Guest cart merge failed:', e);
+      // Guest cart merge fallback
     }
   }, []);
 
@@ -137,7 +137,7 @@ export const CartProvider = ({ children }) => {
         quantity: 1
       }, { silent: true });
     } catch (e) {
-      console.warn('Backend cart sync failed:', e);
+      // Backend sync quietly skipped
     }
   };
 
@@ -150,7 +150,7 @@ export const CartProvider = ({ children }) => {
       try {
         await client.delete(`/api/cart/${productId}`, { silent: true });
       } catch (e) {
-        console.warn('Backend cart sync failed:', e);
+        // Backend sync quietly skipped
       } finally {
         setSyncing(false);
       }
@@ -175,7 +175,7 @@ export const CartProvider = ({ children }) => {
           await client.delete(`/api/cart/${pid}`, { silent: true });
         }
       } catch (e) {
-        console.warn('Backend cart sync failed:', e);
+        // Backend sync quietly skipped
       } finally {
         setSyncing(false);
       }
@@ -190,7 +190,7 @@ export const CartProvider = ({ children }) => {
       try {
         await client.delete('/api/cart', { silent: true });
       } catch (e) {
-        console.warn('Backend cart sync failed:', e);
+        // Backend sync quietly skipped
       } finally {
         setSyncing(false);
       }

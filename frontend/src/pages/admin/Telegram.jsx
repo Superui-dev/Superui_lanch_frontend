@@ -27,7 +27,7 @@ const Telegram = () => {
           }
         }
       } catch (err) {
-        console.warn('Failed to load Telegram settings:', err.message);
+        // Quiet fallback
       }
     };
     fetchSettings();

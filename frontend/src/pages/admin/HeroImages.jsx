@@ -19,7 +19,7 @@ const HeroImages = () => {
         setImages(res.data.data);
       }
     } catch (err) {
-      console.error('Failed to fetch hero images', err);
+      // Quiet fallback
     } finally {
       setLoading(false);
     }
@@ -44,7 +44,7 @@ const HeroImages = () => {
       setFormData({ imageUrl: '', title: '', subtitle: '', linkUrl: '', order: 0, visible: true });
       fetchImages();
     } catch (err) {
-      console.error('Failed to save hero image', err);
+      // Quiet fallback
     }
   };
 
@@ -67,7 +67,7 @@ const HeroImages = () => {
       await client.delete(`/api/admin/hero-images/${id}`);
       fetchImages();
     } catch (err) {
-      console.error('Failed to delete hero image', err);
+      // Quiet fallback
     }
   };
 

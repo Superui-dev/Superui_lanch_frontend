@@ -44,9 +44,9 @@ const OrderPurchaseNotifier = () => {
     const socket = io(SOCKET_URL, {
       transports: ['polling', 'websocket'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      timeout: 20000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 5000,
+      timeout: 10000,
       autoConnect: true
     });
 

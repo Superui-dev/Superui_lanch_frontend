@@ -10,8 +10,7 @@ export const WatchlistProvider = ({ children }) => {
   const { user, isAuthenticated, openAuthModal } = useAuth();
 
   const fetchWatchlist = async () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!token || !isAuthenticated) {
+    if (!isAuthenticated && !user) {
       setItems([]);
       setLoading(false);
       return;
@@ -32,62 +31,60 @@ export const WatchlistProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const mfaToken = sessionStorage.getItem('admin_mfa_token') || localStorage.getItem('admin_mfa_token');
-    const authSession = localStorage.getItem('supabase.auth.token') || localStorage.getItem('customer_profile');
-    if (!isAuthenticated && !mfaToken && !authSession) {
+    if (!isAuthenticated && !user) {
       setItems([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
-    client.get('/api/wishlist', { silent: true })
-      .then(res => {
-        if (res.data?.success && res.data?.data) {
-          setItems(res.data.data.productIds || []);
-        } else {
-          setItems([]);
-        }
-      })
-      .catch(() => {
-        setItems([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [isAuthenticated, user?._id]);
+    fetchWatchlist();
+  }, [isAuthenticated, user?._id || user?.id]);
 
   const addToWatchlist = async (productId) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       openAuthModal('login');
       return;
     }
+    // Optimistic UI update
+    setItems(prev => prev.some(item => (item._id || item) === productId) ? prev : [...prev, productId]);
     try {
       const res = await client.post(`/api/wishlist/add/${productId}`);
       if (res.data?.success && res.data?.data) {
         setItems(res.data.data.productIds || []);
       }
     } catch (err) {
-      console.error('Failed to add to watchlist', err);
+      // Revert if error
+      fetchWatchlist();
     }
   };
 
   const removeFromWatchlist = async (productId) => {
+    if (!isAuthenticated || !user) {
+      openAuthModal('login');
+      return;
+    }
+    // Optimistic UI update
+    setItems(prev => prev.filter(item => (item._id || item) !== productId));
     try {
       const res = await client.delete(`/api/wishlist/remove/${productId}`);
       if (res.data?.success && res.data?.data) {
         setItems(res.data.data.productIds || []);
       }
     } catch (err) {
-      console.error('Failed to remove from watchlist', err);
+      // Revert if error
+      fetchWatchlist();
     }
   };
 
   const isInWatchlist = (productId) => {
-    return items.some(item => item._id === productId || item === productId);
+    if (!productId || !items) return false;
+    return items.some(item => {
+      const id = typeof item === 'object' && item !== null ? item._id : item;
+      return String(id) === String(productId);
+    });
   };
 
   const toggleWatchlist = async (productId) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       openAuthModal('login');
       return;
     }
@@ -103,7 +100,7 @@ export const WatchlistProvider = ({ children }) => {
       await client.delete('/api/wishlist/clear');
       setItems([]);
     } catch (err) {
-      console.error('Failed to clear watchlist', err);
+      // Failed to clear watchlist
     }
   };
 

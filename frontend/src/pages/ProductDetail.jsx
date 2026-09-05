@@ -46,7 +46,7 @@ const ProductDetail = () => {
             const finalRelated = Array.from(new Map(fetchedRelated.map(p => [p._id, p])).values()).slice(0, 3);
             setRelatedProducts(finalRelated);
           } catch (relErr) {
-            console.warn('Failed to load related products:', relErr.message);
+            // Quiet fallback
           }
 
         } else {
@@ -257,7 +257,7 @@ const ProductDetail = () => {
                 <div>
                   <span className="text-neutral-500 block">Last Updated</span>
                   <span className="font-bold text-neutral-900">
-                    {new Date(product.updatedAt || product.createdAt).toLocaleDateString('en-US', {
+                    {new Date(product.updatedAt || product.createdAt || Date.now()).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'

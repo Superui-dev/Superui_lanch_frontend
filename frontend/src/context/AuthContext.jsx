@@ -114,11 +114,11 @@ export const AuthProvider = ({ children }) => {
               authUserId: profile.id
             });
           } catch (syncErr) {
-            console.warn('Backend login sync unavailable');
+            // Backend login sync unavailable
           }
         }
       } catch (err) {
-        console.error('Failed to load user session', err);
+        // Failed to load user session
       } finally {
         setLoading(false);
       }
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
           authUserId = data.user.id;
         }
       } catch (subaErr) {
-        console.warn('Supabase signup fallback:', subaErr.message);
+        // Supabase signup fallback
       }
 
       let profile = {
@@ -172,9 +172,13 @@ export const AuthProvider = ({ children }) => {
             _id: dbUser._id,
             customerId: dbUser.customerId || dbUser._id
           };
+          if (syncRes.data.data.token) {
+            localStorage.setItem('customer_token', syncRes.data.data.token);
+            localStorage.setItem('token', syncRes.data.data.token);
+          }
         }
       } catch (syncErr) {
-        console.warn('MongoDB login sync warn:', syncErr.message);
+        // MongoDB login sync warn
       }
 
       setUser(profile);
@@ -183,7 +187,6 @@ export const AuthProvider = ({ children }) => {
 
       return profile;
     } catch (err) {
-      console.error('Registration failed:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -202,16 +205,21 @@ export const AuthProvider = ({ children }) => {
           email,
           password
         });
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 1500));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
 
         const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
-        if (!error && data?.user) {
+        if (error) {
+          throw new Error('Invalid email or password. If you are a new customer, please create an account first.');
+        }
+        if (data?.user) {
           authUserId = data.user.id;
           customerName = data.user.user_metadata?.full_name || customerName;
           customerPhone = data.user.user_metadata?.phone || '';
         }
       } catch (subaErr) {
-        console.warn('Supabase login fallback:', subaErr.message);
+        if (subaErr.message && !subaErr.message.includes('timeout')) {
+          throw subaErr;
+        }
       }
 
       let profile = {
@@ -239,9 +247,13 @@ export const AuthProvider = ({ children }) => {
             name: dbUser.name || profile.name,
             phone: dbUser.phone || profile.phone
           };
+          if (syncRes.data.data.token) {
+            localStorage.setItem('customer_token', syncRes.data.data.token);
+            localStorage.setItem('token', syncRes.data.data.token);
+          }
         }
       } catch (syncErr) {
-        console.warn('MongoDB login sync warn:', syncErr.message);
+        // MongoDB login sync warn
       }
 
       setUser(profile);
@@ -250,7 +262,6 @@ export const AuthProvider = ({ children }) => {
 
       return profile;
     } catch (err) {
-      console.error('Customer login failed:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -268,7 +279,7 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
       return data;
     } catch (err) {
-      console.warn('Google Auth simulation fallback:', err.message);
+      // Google Auth simulation fallback
       let googleProfile = {
         id: 'google-user-' + Date.now(),
         email: 'google.creator@gmail.com',
@@ -347,7 +358,6 @@ export const AuthProvider = ({ children }) => {
 
       return { profile: { ...profile, mfaEnabled: true }, mfaRequired: true, mfaEnrolled: isMfaEnrolled };
     } catch (err) {
-      console.error('Admin login failed:', err);
       throw new Error(err.response?.data?.message || err.message || 'Invalid login credentials');
     } finally {
       setLoading(false);
@@ -356,56 +366,68 @@ export const AuthProvider = ({ children }) => {
 
   const enrollMfa = async () => {
     try {
-      const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: 'Admin Authenticator'
-      });
-
-      if (error || !data?.totp) {
-        throw error || new Error('Failed to retrieve TOTP credentials');
+      const res = await client.get('/api/auth/mfa/setup');
+      if (res.data?.success && res.data?.data) {
+        const resultData = {
+          qrCode: res.data.data.qrCode,
+          secret: res.data.data.secret,
+          uri: res.data.data.uri
+        };
+        setEnrollmentData(resultData);
+        setMfaEnrolled(true);
+        return resultData;
       }
-
-      const rawQr = data.totp.qr_code || '';
-      const qrCodeUrl = rawQr.startsWith('<svg')
-        ? `data:image/svg+xml;utf8,${encodeURIComponent(rawQr)}`
-        : rawQr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.totp.uri || '')}`;
-
-      const resultData = {
-        factorId: data.id,
-        qrCode: qrCodeUrl,
-        secret: data.totp.secret,
-        uri: data.totp.uri
-      };
-
-      setEnrollmentData(resultData);
-      setMfaEnrolled(true);
-      return resultData;
+      throw new Error(res.data?.message || 'Failed to retrieve MFA setup');
     } catch (err) {
-      console.error('MFA enrollment failed:', err.message);
-      throw new Error('MFA enrollment failed. Please ensure Supabase is configured correctly.');
+      try {
+        const { data, error } = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'Admin Authenticator'
+        });
+
+        if (error || !data?.totp) {
+          throw error || new Error('Failed to retrieve TOTP credentials');
+        }
+
+        const rawQr = data.totp.qr_code || '';
+        const qrCodeUrl = rawQr.startsWith('<svg')
+          ? `data:image/svg+xml;utf8,${encodeURIComponent(rawQr)}`
+          : rawQr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.totp.uri || '')}`;
+
+        const resultData = {
+          factorId: data.id,
+          qrCode: qrCodeUrl,
+          secret: data.totp.secret,
+          uri: data.totp.uri
+        };
+
+        setEnrollmentData(resultData);
+        setMfaEnrolled(true);
+        return resultData;
+      } catch (fallbackErr) {
+        throw new Error(err.response?.data?.message || 'MFA enrollment failed. Please ensure backend is running.');
+      }
     }
   };
-
 
   const verifyMfa = async (code) => {
     setLoading(true);
     const inputCode = code.trim();
     try {
-      // Verify MFA via backend API which uses Supabase
       const res = await client.post('/api/auth/mfa/verify', { code: inputCode });
       if (res.data?.success) {
-        // Store the MFA token from the backend
         const mfaToken = res.data?.data?.mfaToken;
         if (mfaToken) {
           sessionStorage.setItem('admin_mfa_token', mfaToken);
           localStorage.setItem('admin_mfa_token', mfaToken);
         }
+        sessionStorage.setItem('admin_mfa_verified', 'true');
+        localStorage.setItem('admin_mfa_enrolled', 'true');
         setMfaVerified(true);
         return true;
       }
       throw new Error('MFA verification failed');
     } catch (err) {
-      console.error('MFA verification failed', err.message);
       throw new Error(err.response?.data?.message || 'Invalid verification code. Access blocked.');
     } finally {
       setLoading(false);
@@ -437,7 +459,6 @@ export const AuthProvider = ({ children }) => {
       setMfaVerified(true);
       return true;
     } catch (err) {
-      console.error('MFA verification failed', err.message);
       throw new Error('Invalid 6-digit code from Google Authenticator app');
     } finally {
       setLoading(false);
@@ -448,22 +469,22 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     const inputCode = code.trim();
     try {
-      if (enrollmentData?.factorId) {
-        const { data: challengeData } = await supabase.auth.mfa.challenge({ factorId: enrollmentData.factorId });
-        await supabase.auth.mfa.verify({
-          factorId: enrollmentData.factorId,
-          challengeId: challengeData.id,
-          code: inputCode
-        });
+      const res = await client.post('/api/auth/mfa/verify', { code: inputCode });
+      if (res.data?.success) {
+        const mfaToken = res.data?.data?.mfaToken;
+        if (mfaToken) {
+          sessionStorage.setItem('admin_mfa_token', mfaToken);
+          localStorage.setItem('admin_mfa_token', mfaToken);
+        }
         localStorage.setItem('admin_mfa_enrolled', 'true');
+        sessionStorage.setItem('admin_mfa_verified', 'true');
         setMfaEnrolled(true);
         setMfaVerified(true);
         return true;
       }
-      throw new Error('No enrollment data found. Please restart the MFA setup.');
+      throw new Error('MFA verification failed');
     } catch (err) {
-      console.error('MFA enrollment verification failed:', err.message);
-      throw new Error(err.message || 'Invalid 6-digit code. Please check your authenticator app.');
+      throw new Error(err.response?.data?.message || err.message || 'Invalid 6-digit code from authenticator app');
     } finally {
       setLoading(false);
     }
@@ -479,6 +500,8 @@ export const AuthProvider = ({ children }) => {
     setEnrollmentData(null);
     localStorage.removeItem('admin_profile');
     localStorage.removeItem('customer_profile');
+    localStorage.removeItem('customer_token');
+    localStorage.removeItem('token');
     sessionStorage.removeItem('admin_mfa_verified');
     sessionStorage.removeItem('admin_mfa_token');
   };

@@ -39,7 +39,7 @@ const Bookings = () => {
         setBookings([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch bookings:', err);
+      // Quiet fallback
       setBookings([]);
     } finally {
       setLoading(false);

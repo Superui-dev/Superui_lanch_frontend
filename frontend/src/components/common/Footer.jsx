@@ -119,10 +119,10 @@ const Footer = () => {
 
         </div>
 
-        {/* Copyright Bar */}
-        <div className="pt-3 sm:pt-8 flex flex-col items-center justify-between text-xs text-neutral-500 gap-4 hidden min-[568px]:block">
-          <p className="font-medium">{copyright}</p>
-          <div className="flex items-center space-x-1 font-medium">
+        {/* Copyright Bar (Left: SuperUI Copyright, Right: Designed & Built by AKHIL THADAKA above 991px) */}
+        <div className="pt-6 sm:pt-8 flex flex-col min-[991px]:flex-row items-center justify-between text-xs text-neutral-500 gap-3 sm:gap-4">
+          <p className="font-medium text-center min-[991px]:text-left">{copyright}</p>
+          <div className="flex items-center space-x-1 font-medium text-center min-[991px]:text-right">
             <span>Designed & Built with</span>
             <Heart className="h-3.5 w-3.5 text-red-500 fill-current mx-0.5" />
             <span>by <strong className="text-neutral-900 font-semibold">AKHIL THADAKA</strong> in Warangal, Telangana, India</span>

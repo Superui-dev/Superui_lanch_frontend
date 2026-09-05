@@ -21,7 +21,7 @@ const NavbarAdmin = () => {
         setMenuItems([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch navbar settings:', err);
+      // Quiet fallback
       setMenuItems([]);
     } finally {
       setLoading(false);

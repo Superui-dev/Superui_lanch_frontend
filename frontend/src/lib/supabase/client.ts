@@ -43,7 +43,6 @@ export const createClient = () => {
       }
     });
   } catch (err) {
-    console.warn('Failed to initialize Supabase browser client, using fallback mock client:', err);
     return createMockSupabaseClient();
   }
 };

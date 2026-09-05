@@ -123,7 +123,6 @@ const Checkout = () => {
               throw new Error(verifyRes.data?.message || 'Payment verification failed.');
             }
           } catch (verifyErr) {
-            console.error('Payment verification error:', verifyErr);
             setCheckoutError(verifyErr.response?.data?.message || verifyErr.message || 'Payment verification failed.');
           } finally {
             setCheckoutLoading(false);
@@ -157,7 +156,6 @@ const Checkout = () => {
       rzp.open();
 
     } catch (err) {
-      console.error('Checkout error:', err);
       setCheckoutError(err.response?.data?.message || err.message || 'Checkout failed to initialize. Please try again.');
       setCheckoutLoading(false);
     }

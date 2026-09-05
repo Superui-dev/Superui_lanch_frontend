@@ -27,7 +27,7 @@ const TestimonialsAdmin = () => {
         setTestimonials(res.data.data || []);
       }
     } catch (err) {
-      console.warn('Failed to load testimonials:', err);
+      // Quiet fallback
     } finally {
       setLoading(false);
     }

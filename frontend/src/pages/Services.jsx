@@ -22,7 +22,7 @@ const Services = () => {
           setServices(res.data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch services:', err);
+        // Services fallback
       } finally {
         setLoading(false);
       }

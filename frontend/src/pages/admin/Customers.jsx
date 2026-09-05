@@ -27,7 +27,7 @@ const Customers = () => {
         setCustomers([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch customers:', err);
+      // Quiet fallback
       setCustomers([]);
     } finally {
       setLoading(false);

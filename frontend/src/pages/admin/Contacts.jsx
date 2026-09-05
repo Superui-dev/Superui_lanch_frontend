@@ -28,7 +28,7 @@ const Contacts = () => {
         setMessages([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch contact messages:', err);
+      // Quiet fallback
       setMessages([]);
     } finally {
       setLoading(false);

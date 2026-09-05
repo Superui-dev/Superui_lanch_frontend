@@ -26,7 +26,7 @@ const Reports = () => {
         setTopProducts([]);
       }
     } catch (err) {
-      console.warn('Failed to fetch reports:', err);
+      // Quiet fallback
       setTopProducts([]);
     } finally {
       setLoading(false);

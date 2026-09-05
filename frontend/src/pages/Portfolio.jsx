@@ -5,6 +5,7 @@ import { useWatchlist } from '../context/WatchlistContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import LivePreviewModal from '../components/common/LivePreviewModal';
+import ProductCardImageCarousel from '../components/common/ProductCardImageCarousel';
 import { Eye, Heart, ArrowRight, Zap, BookOpen, Monitor, Palette, Sparkles, ExternalLink, X, Menu, ShoppingCart } from 'lucide-react';
 
 const Portfolio = () => {
@@ -19,7 +20,7 @@ const Portfolio = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsRes = await client.get('/api/public/products?limit=50');
+        const productsRes = await client.get('/api/public/products?limit=50&category=portfolio');
 
         let allProds = [];
         if (productsRes.data?.success && productsRes.data?.data?.products) {
@@ -28,14 +29,7 @@ const Portfolio = () => {
           allProds = productsRes.data.data;
         }
 
-        const portfolioProds = allProds.filter(p => {
-          const nameMatch = p.name?.toLowerCase().includes('portfolio');
-          const descMatch = p.shortDescription?.toLowerCase().includes('portfolio') || p.description?.toLowerCase().includes('portfolio');
-          const catMatch = p.categoryId?.slug === 'websites' || p.category === 'websites';
-          return nameMatch || descMatch || catMatch;
-        });
-
-        setProducts(portfolioProds);
+        setProducts(allProds);
       } catch (err) {
         setProducts([]);
       } finally {
@@ -115,12 +109,8 @@ const Portfolio = () => {
                 return (
                   <div key={product._id} className="group bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
                     <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-                      <img
-                        src={product.thumbnail?.url || product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-3 left-3">
+                      <ProductCardImageCarousel product={product} />
+                      <div className="absolute top-3 left-3 z-10">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-xs font-medium text-neutral-700">
                           {product.categoryId?.name || product.category}
                         </span>
@@ -160,36 +150,47 @@ const Portfolio = () => {
                         <p className="mt-2 text-sm text-neutral-500 line-clamp-2">
                           {product.shortDescription || product.description}
                         </p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="flex items-baseline space-x-2">
-                            <span className="text-lg font-bold text-neutral-900">
-                              INR {product.sellingPrice?.toLocaleString() || product.price?.toLocaleString()}
+                        <div className="mt-4 flex items-baseline justify-between gap-2">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-black text-neutral-900">
+                              ₹{(product.sellingPrice || product.price)?.toLocaleString()}
                             </span>
-                            {product.compareAtPrice && (
-                              <span className="text-sm text-neutral-400 line-through">
-                                INR {product.compareAtPrice.toLocaleString()}
+                            {product.compareAtPrice && product.compareAtPrice > (product.sellingPrice || product.price) && (
+                              <span className="text-xs text-neutral-400 line-through">
+                                ₹{product.compareAtPrice.toLocaleString()}
                               </span>
                             )}
                           </div>
+                          {product.compareAtPrice && product.compareAtPrice > (product.sellingPrice || product.price) && (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold">
+                              {Math.round(((product.compareAtPrice - (product.sellingPrice || product.price)) / product.compareAtPrice) * 100)}% OFF
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Action Buttons: Add to Cart & Buy Now */}
-                      <div className="mt-6 flex items-center space-x-2.5">
+                      {/* Action Buttons: Details, Add to Cart & Buy Now */}
+                      <div className="mt-5 pt-3 border-t border-neutral-100 grid grid-cols-12 gap-1.5">
+                        <Link
+                          to={`/products/${product.slug || product._id}`}
+                          className="col-span-3 inline-flex items-center justify-center px-2 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-900 text-xs font-semibold transition-colors"
+                        >
+                          <span>Details</span>
+                        </Link>
                         <button
                           type="button"
                           onClick={() => handleAddToCart(product)}
-                          className="flex-1 inline-flex items-center justify-center space-x-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-sm"
+                          className="col-span-4 inline-flex items-center justify-center gap-1 rounded-xl bg-neutral-900 hover:bg-neutral-800 px-2.5 py-2 text-xs font-bold text-white transition-all shadow-sm"
                         >
-                          <ShoppingCart className="h-4 w-4" />
-                          <span>Add to Cart</span>
+                          <ShoppingCart className="h-3.5 w-3.5" />
+                          <span>Add</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleBuyNow(product)}
-                          className="flex-1 inline-flex items-center justify-center space-x-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-brand-600/20"
+                          className="col-span-5 inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-brand-600 hover:from-orange-600 hover:to-brand-700 px-3 py-2 text-xs font-black text-white transition-all shadow-md shadow-orange-500/20"
                         >
-                          <Zap className="h-4 w-4" />
+                          <Zap className="h-3.5 w-3.5 fill-current" />
                           <span>Buy Now</span>
                         </button>
                       </div>

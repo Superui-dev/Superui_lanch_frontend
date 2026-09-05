@@ -72,7 +72,7 @@ export function classifyError(err) {
     severity = ERROR_SEVERITIES.CRITICAL;
     code = 'ERR_NETWORK_DISCONNECTED';
     userMessage = 'Unable to connect to the backend server. Please check your internet connection or backend service status.';
-    suggestedFix = 'Verify that the backend server is running at VITE_API_URL and CORS headers allow this origin.';
+    suggestedFix = 'Verify that the backend server is running at VITE_API_BASE_URL and CORS headers allow this origin.';
   } else if (rawMessage.includes('CORS') || rawMessage.includes('Access-Control-Allow-Origin')) {
     layer = ERROR_LAYERS.INFRASTRUCTURE;
     category = ERROR_CATEGORIES.CORS;
