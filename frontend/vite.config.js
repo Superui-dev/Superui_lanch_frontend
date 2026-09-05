@@ -26,7 +26,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('react-router') ||
+              id.includes('@dnd-kit') ||
+              id.includes('@calcom')
+            ) {
               return 'vendor-react';
             }
             if (id.includes('lucide-react')) {
