@@ -12,7 +12,9 @@ import {
   Clock, Calendar, QrCode, Copy, Check, CheckCircle2, Eye, EyeOff, Image, Heart, LifeBuoy, Grid, Phone, Type, Layers
 } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  (import.meta.env.PROD ? 'https://superui-lanch-backend.onrender.com' : 'http://localhost:5000');
 
 // Central audio context (lazily initialized on first user interaction)
 let globalAudioCtx = null;

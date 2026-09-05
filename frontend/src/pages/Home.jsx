@@ -665,10 +665,107 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+         </div>
+       </section>
 
-   
+       {/* Verified Store Catalog Section - Product Cards Grid */}
+       <section className="py-20 bg-[#FAFAFA] border-t border-neutral-200/80">
+         <div className="mx-auto w-full max-w-7xl min-[1600px]:max-w-[1680px] px-4 sm:px-6 lg:px-8 space-y-8">
+           <div className="text-center space-y-3 w-[90%] max-w-3xl mx-auto">
+             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-xs font-bold shadow-xs">
+               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+               <span>Verified Store Catalog</span>
+             </div>
+             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight">
+               Premium <span className="font-medium text-neutral-500">Products</span>
+             </h2>
+             <p className="text-xs sm:text-sm md:text-base text-neutral-500 max-w-lg mx-auto font-medium leading-relaxed">
+               Hand-picked, production-ready templates and UI kits with secure delivery and instant download.
+             </p>
+           </div>
+
+           {/* Search bar (matches test placeholder) */}
+           <div className="max-w-2xl mx-auto w-full">
+             <div className="relative">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+               <input
+                 type="text"
+                 value={productSearch}
+                 onChange={(e) => setProductSearch(e.target.value)}
+                 placeholder="What type of design are you interested in?"
+                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200/90 bg-white text-sm font-medium text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/60 transition-all shadow-sm"
+               />
+             </div>
+           </div>
+
+           {gridProducts.length === 0 ? (
+             <div className="text-center py-16 text-neutral-400 text-sm font-medium">
+               No products match your search.
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+               {gridProducts.map((product) => (
+                 <div
+                   key={product._id}
+                   className="group h-full bg-white rounded-2xl border border-neutral-200/90 overflow-hidden hover:shadow-xl hover:border-neutral-300 transition-all duration-300 flex flex-col"
+                 >
+                   <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
+                     <img
+                       src={product.thumbnail?.url || product.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80'}
+                       alt={product.name}
+                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                       onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=No+Image'; }}
+                     />
+                     {product.discountPercent > 0 && (
+                       <div className="absolute top-3 left-3">
+                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow-sm">
+                           {product.discountPercent}% OFF
+                         </span>
+                       </div>
+                     )}
+                   </div>
+
+                   <div className="p-4 flex-1 flex flex-col">
+                     <h3 className="text-sm font-bold text-neutral-900 line-clamp-2 mb-1 group-hover:text-brand-600 transition-colors">
+                       {product.name}
+                     </h3>
+                     <p className="text-[11px] text-neutral-500 font-medium line-clamp-2 mb-3 flex-1">
+                       {product.shortDescription || product.description || 'Premium digital product'}
+                     </p>
+
+                     <div className="flex items-baseline gap-2 mb-3">
+                       <span className="text-base font-extrabold text-neutral-900">
+                         ₹{Number(product.sellingPrice || product.price || 0).toLocaleString('en-IN')}
+                       </span>
+                       {product.originalPrice > product.sellingPrice && (
+                         <span className="text-[10px] text-neutral-400 line-through font-medium">
+                           ₹{Number(product.originalPrice).toLocaleString('en-IN')}
+                         </span>
+                       )}
+                     </div>
+
+                     <div className="flex items-center gap-2">
+                       <button
+                         onClick={() => handleAddToCart(product)}
+                         className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-300 bg-white text-neutral-700 text-[11px] font-bold hover:bg-neutral-50 transition-all"
+                       >
+                         <ShoppingCart className="h-3.5 w-3.5" />
+                         <span>Add</span>
+                       </button>
+                       <button
+                         onClick={() => handleBuyNow(product)}
+                         className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 hover:bg-brand-600 text-white text-[11px] font-bold transition-all"
+                       >
+                         <span>Buy Now</span>
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+         </div>
+       </section>
 
       {/* Services Categories Section (New Pattern: Unified Search, Dropdown Filter & Book Call) */}
       <section className="py-20 bg-white border-t border-neutral-200/80">

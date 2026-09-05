@@ -10,7 +10,9 @@ import {
   LineChart, ShoppingCart, ShieldCheck, Server, ChevronLeft, ChevronRight, ChevronDown, ArrowUpRight, Users
 } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  (import.meta.env.PROD ? 'https://superui-lanch-backend.onrender.com' : 'http://localhost:5000');
 
 const Dashboard = () => {
   const { colors, isLight } = useAdminTheme();

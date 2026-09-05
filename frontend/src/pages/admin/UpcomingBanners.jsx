@@ -3,19 +3,161 @@ import { useAdminTheme } from '../../context/AdminThemeContext';
 import AdminLayout from '../../components/admin/AdminLayout';
 import {
   Plus, Trash2, Image as ImageIcon, Pencil, X, Eye, EyeOff,
-  RotateCcw, ExternalLink, Sparkles, Check, ArrowUpDown, Layers
+  RotateCcw, ExternalLink, Sparkles, Check, ArrowUpDown, Layers, GripVertical, Upload, Loader2
 } from 'lucide-react';
+import {
+  DndContext, PointerSensor, useSensor, useSensors, closestCenter
+} from '@dnd-kit/core';
+import {
+  SortableContext, useSortable, arrayMove, rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import client from '../../api/client';
+import { Link } from 'react-router-dom';
+
+const SortableBannerCard = ({ banner, index, colors, onEdit, onDelete, onToggleVisibility }) => {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging
+  } = useSortable({ id: banner._id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 50 : 'auto'
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${colors.bgCard} border ${colors.cardBorder} rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-orange-500/30 group ${isDragging ? 'ring-2 ring-orange-500/40' : ''}`}
+    >
+      {/* Banner Image Thumbnail with Overlay Badges */}
+      <div className="relative aspect-[16/7] w-full bg-neutral-950 overflow-hidden">
+        <img
+          src={banner.bannerImage}
+          alt={banner.title}
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.currentTarget.src = 'https://via.placeholder.com/800x350?text=Image+Unavailable';
+          }}
+        />
+
+        {/* Order Tag & Status Badge */}
+        <div className="absolute top-3 left-3 flex items-center space-x-1.5">
+          <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white text-[10px] font-bold border border-white/10">
+            #{index + 1}
+          </span>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-md border ${
+            banner.visible !== false
+              ? 'bg-emerald-500/80 text-white border-emerald-400/30'
+              : 'bg-neutral-800/80 text-neutral-300 border-neutral-700/50'
+          }`}>
+            {banner.visible !== false ? 'Active' : 'Hidden'}
+          </span>
+        </div>
+
+        {/* Drag Handle */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/70 hover:bg-black/90 text-white cursor-grab active:cursor-grabbing touch-none"
+          title="Drag to reorder"
+          aria-label="Drag to reorder banner"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+
+        {banner.badge && (
+          <div className="absolute bottom-3 left-3 max-w-[80%] truncate px-2.5 py-1 rounded-lg bg-black/75 backdrop-blur-md text-[10px] font-medium text-orange-400 border border-orange-500/20">
+            {banner.badge}
+          </div>
+        )}
+      </div>
+
+      {/* Content Information */}
+      <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className={`text-sm font-bold ${colors.text} line-clamp-1`}>
+            {banner.title}
+          </h3>
+          {banner.headline && (
+            <p className={`text-xs font-medium text-orange-500 mt-1 line-clamp-1`}>
+              {banner.headline}
+            </p>
+          )}
+          {banner.subtitle && (
+            <p className={`text-xs ${colors.textSecondary} mt-1 line-clamp-2 leading-relaxed`}>
+              {banner.subtitle}
+            </p>
+          )}
+          {banner.link && (
+            <div className="flex items-center space-x-1 mt-2 text-[11px] text-neutral-400">
+              <ExternalLink className="h-3 w-3" />
+              <span className="truncate">{banner.link}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions Bar */}
+        <div className={`pt-3 border-t ${colors.border} flex items-center justify-between`}>
+          <button
+            onClick={() => onToggleVisibility(banner)}
+            className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              banner.visible !== false
+                ? `${colors.bgSecondary} ${colors.text} border-neutral-300 dark:border-neutral-700 hover:border-orange-500`
+                : 'bg-neutral-200/50 dark:bg-neutral-800 text-neutral-400 border-transparent hover:text-neutral-200'
+            }`}
+            title={banner.visible !== false ? 'Hide from homepage' : 'Show on homepage'}
+          >
+            {banner.visible !== false ? (
+              <>
+                <Eye className="h-3.5 w-3.5 text-emerald-500" />
+                <span>Visible</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+                <span>Hidden</span>
+              </>
+            )}
+          </button>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onEdit(banner)}
+              className={`p-2 rounded-lg ${colors.bgSecondary} border ${colors.border} ${colors.textSecondary} hover:text-orange-500 hover:border-orange-500/40 transition-colors`}
+              title="Edit Banner"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(banner._id, banner.title)}
+              className={`p-2 rounded-lg ${colors.bgSecondary} border ${colors.border} text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 transition-colors`}
+              title="Delete Banner"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const UpcomingBanners = () => {
   const { colors, isLight } = useAdminTheme();
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [feedbackMsg, setFeedbackMsg] = useState({ text: '', type: '' });
-  
+
   const [formData, setFormData] = useState({
     title: '',
     bannerImage: '',
@@ -26,6 +168,10 @@ const UpcomingBanners = () => {
     order: 0,
     visible: true
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
 
   const showFeedback = (text, type = 'success') => {
     setFeedbackMsg({ text, type });
@@ -77,6 +223,39 @@ const UpcomingBanners = () => {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showFeedback('Please select a valid image file', 'error');
+      return;
+    }
+    try {
+      setUploading(true);
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await client.post('/api/admin/upcoming-banners/upload-image', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data?.success && res.data?.data?.url) {
+        setFormData((prev) => ({ ...prev, bannerImage: res.data.data.url }));
+        showFeedback('Image uploaded to R2 successfully!');
+      } else {
+        showFeedback('Upload succeeded but no URL returned', 'error');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to upload image';
+      if (err.response?.status === 500 || /R2/i.test(msg)) {
+        showFeedback('R2 is not configured. Please paste an image URL instead.', 'error');
+      } else {
+        showFeedback(msg, 'error');
+      }
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleEdit = (banner) => {
     setEditingId(banner._id);
     setFormData({
@@ -109,10 +288,10 @@ const UpcomingBanners = () => {
   };
 
   const handleDelete = async (id, title) => {
-    if (!window.confirm(`Are you sure you want to delete banner "${title}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete banner "${title}"?\n\nThe image (if stored in R2) will be removed permanently.`)) return;
     try {
       await client.delete(`/api/admin/upcoming-banners/${id}`);
-      showFeedback('Banner deleted successfully');
+      showFeedback('Banner deleted and R2 image cleaned up');
       fetchBanners();
     } catch (err) {
       showFeedback(err.response?.data?.message || 'Failed to delete banner', 'error');
@@ -120,7 +299,7 @@ const UpcomingBanners = () => {
   };
 
   const handleResetDefaults = async () => {
-    if (!window.confirm('Reset all banners to default DigiLocker banners? Any custom banners will be replaced.')) return;
+    if (!window.confirm('Reset all banners to default DigiLocker banners? Any custom banners (and their R2 images) will be permanently removed.')) return;
     try {
       setLoading(true);
       await client.post('/api/admin/upcoming-banners/reset');
@@ -130,6 +309,30 @@ const UpcomingBanners = () => {
       showFeedback('Failed to reset banners', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = banners.findIndex((b) => b._id === active.id);
+    const newIndex = banners.findIndex((b) => b._id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reordered = arrayMove(banners, oldIndex, newIndex);
+    setBanners(reordered);
+
+    try {
+      setReordering(true);
+      const orderedIds = reordered.map((b) => b._id);
+      await client.post('/api/admin/upcoming-banners/reorder', { orderedIds });
+      showFeedback('Banner order saved');
+    } catch (err) {
+      showFeedback('Failed to save new order. Reverted.', 'error');
+      fetchBanners();
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -161,13 +364,29 @@ const UpcomingBanners = () => {
               <h1 className={`text-xl sm:text-2xl font-bold tracking-tight ${colors.text}`}>
                 Upcoming Products & Banners
               </h1>
+              {reordering && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-orange-500 ml-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Saving order...
+                </span>
+              )}
             </div>
             <p className={`${colors.textSecondary} text-xs sm:text-sm mt-1.5`}>
-              Create, edit, reorder, and control live visibility for the hero banner carousel displayed in the Upcoming Products section on the homepage.
+              Create, edit, reorder via drag-and-drop, and control visibility for the carousel on the homepage.
+              Banners are also exposed at <Link to="/banner" className="underline text-orange-500 hover:text-orange-600">/banner</Link>.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              to="/banner"
+              target="_blank"
+              className={`inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border ${colors.border} ${colors.bgSecondary} ${colors.textSecondary} hover:text-orange-500 hover:border-orange-500/40 transition-all duration-200`}
+              title="Open public /banner page"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>View /banner</span>
+            </Link>
             <button
               onClick={handleResetDefaults}
               className={`inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border ${colors.border} ${colors.bgSecondary} ${colors.textSecondary} hover:${colors.text} hover:border-orange-500/40 transition-all duration-200`}
@@ -216,7 +435,7 @@ const UpcomingBanners = () => {
                   <span>{editingId ? 'Edit Upcoming Banner' : 'Create New Upcoming Banner'}</span>
                 </h2>
                 <p className={`text-[11px] ${colors.textSecondary} mt-0.5`}>
-                  Fill in the banner details. Images will render seamlessly in the full-bleed carousel on the storefront.
+                  Fill in the banner details. Upload an image to R2 or paste an external URL.
                 </p>
               </div>
               <button
@@ -244,19 +463,35 @@ const UpcomingBanners = () => {
                 />
               </div>
 
-              {/* Banner Image URL */}
+              {/* Banner Image URL + Upload */}
               <div>
                 <label className={`block ${colors.textSecondary} font-semibold mb-1.5 uppercase text-[10px] tracking-wider`}>
                   Banner Image URL *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.bannerImage}
-                  onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
-                  placeholder="https://example.com/banner.jpg"
-                  className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} placeholder:text-neutral-400 focus:outline-none ${colors.inputFocus} transition-all duration-200`}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    required
+                    value={formData.bannerImage}
+                    onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
+                    placeholder="https://example.com/banner.jpg"
+                    className={`flex-1 ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} placeholder:text-neutral-400 focus:outline-none ${colors.inputFocus} transition-all duration-200`}
+                  />
+                  <label className={`inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border cursor-pointer text-[11px] font-semibold transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''} ${colors.bgSecondary} ${colors.textSecondary} ${colors.border} hover:text-orange-500 hover:border-orange-500/40`}>
+                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+                <p className={`text-[10px] ${colors.textSecondary} mt-1.5`}>
+                  Upload stores the file in R2 (banners/&hellip;) so the public /banner page reads it back.
+                </p>
               </div>
 
               {/* Badge Text */}
@@ -315,21 +550,8 @@ const UpcomingBanners = () => {
                 />
               </div>
 
-              {/* Sort Order */}
-              <div>
-                <label className={`block ${colors.textSecondary} font-semibold mb-1.5 uppercase text-[10px] tracking-wider`}>
-                  Display Order (Sequence)
-                </label>
-                <input
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
-                  className={`w-full ${colors.bgInput} border ${colors.borderInput} rounded-xl px-3.5 py-2.5 ${colors.text} focus:outline-none ${colors.inputFocus} transition-all duration-200`}
-                />
-              </div>
-
               {/* Visibility Checkbox */}
-              <div className="flex items-center pt-5">
+              <div className="md:col-span-2 flex items-center pt-1">
                 <label className="flex items-center space-x-2.5 cursor-pointer">
                   <input
                     type="checkbox"
@@ -337,7 +559,7 @@ const UpcomingBanners = () => {
                     onChange={(e) => setFormData({ ...formData, visible: e.target.checked })}
                     className="h-4 w-4 rounded border-neutral-300 text-orange-500 focus:ring-orange-500 accent-orange-500"
                   />
-                  <span className={`text-xs font-semibold ${colors.text}`}>Visible on storefront</span>
+                  <span className={`text-xs font-semibold ${colors.text}`}>Visible on storefront (homepage carousel + /banner page)</span>
                 </label>
               </div>
             </div>
@@ -390,12 +612,14 @@ const UpcomingBanners = () => {
 
         {/* Banner List */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className={`text-xs font-bold uppercase tracking-wider ${colors.textSecondary} flex items-center space-x-2`}>
               <span>Active Banners ({banners.length})</span>
+              <ArrowUpDown className="h-3 w-3" />
+              <span className="text-[10px] font-medium opacity-80">Drag cards to reorder</span>
             </h2>
             <span className={`text-[11px] ${colors.textSecondary}`}>
-              Sorted by display order
+              Order persists immediately on drop
             </span>
           </div>
 
@@ -422,113 +646,30 @@ const UpcomingBanners = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {banners.map((banner, index) => (
-                <div
-                  key={banner._id || index}
-                  className={`${colors.bgCard} border ${colors.cardBorder} rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-orange-500/30 group`}
-                >
-                  {/* Banner Image Thumbnail with Overlay Badges */}
-                  <div className="relative aspect-[16/7] w-full bg-neutral-950 overflow-hidden">
-                    <img
-                      src={banner.bannerImage}
-                      alt={banner.title}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/800x350?text=Image+Unavailable';
-                      }}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={banners.map((b) => b._id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {banners.map((banner, index) => (
+                    <SortableBannerCard
+                      key={banner._id}
+                      banner={banner}
+                      index={index}
+                      colors={colors}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onToggleVisibility={handleToggleVisibility}
                     />
-                    
-                    {/* Order Tag & Status Badge */}
-                    <div className="absolute top-3 left-3 flex items-center space-x-1.5">
-                      <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white text-[10px] font-bold border border-white/10">
-                        #{banner.order !== undefined ? banner.order : index + 1}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-md border ${
-                        banner.visible !== false
-                          ? 'bg-emerald-500/80 text-white border-emerald-400/30'
-                          : 'bg-neutral-800/80 text-neutral-300 border-neutral-700/50'
-                      }`}>
-                        {banner.visible !== false ? 'Active' : 'Hidden'}
-                      </span>
-                    </div>
-
-                    {banner.badge && (
-                      <div className="absolute bottom-3 left-3 max-w-[80%] truncate px-2.5 py-1 rounded-lg bg-black/75 backdrop-blur-md text-[10px] font-medium text-orange-400 border border-orange-500/20">
-                        {banner.badge}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content Information */}
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className={`text-sm font-bold ${colors.text} line-clamp-1`}>
-                        {banner.title}
-                      </h3>
-                      {banner.headline && (
-                        <p className={`text-xs font-medium text-orange-500 mt-1 line-clamp-1`}>
-                          {banner.headline}
-                        </p>
-                      )}
-                      {banner.subtitle && (
-                        <p className={`text-xs ${colors.textSecondary} mt-1 line-clamp-2 leading-relaxed`}>
-                          {banner.subtitle}
-                        </p>
-                      )}
-                      {banner.link && (
-                        <div className="flex items-center space-x-1 mt-2 text-[11px] text-neutral-400">
-                          <ExternalLink className="h-3 w-3" />
-                          <span className="truncate">{banner.link}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions Bar */}
-                    <div className={`pt-3 border-t ${colors.border} flex items-center justify-between`}>
-                      <button
-                        onClick={() => handleToggleVisibility(banner)}
-                        className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          banner.visible !== false
-                            ? `${colors.bgSecondary} ${colors.text} border-neutral-300 dark:border-neutral-700 hover:border-orange-500`
-                            : 'bg-neutral-200/50 dark:bg-neutral-800 text-neutral-400 border-transparent hover:text-neutral-200'
-                        }`}
-                        title={banner.visible !== false ? 'Hide from homepage' : 'Show on homepage'}
-                      >
-                        {banner.visible !== false ? (
-                          <>
-                            <Eye className="h-3.5 w-3.5 text-emerald-500" />
-                            <span>Visible</span>
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
-                            <span>Hidden</span>
-                          </>
-                        )}
-                      </button>
-
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEdit(banner)}
-                          className={`p-2 rounded-lg ${colors.bgSecondary} border ${colors.border} ${colors.textSecondary} hover:text-orange-500 hover:border-orange-500/40 transition-colors`}
-                          title="Edit Banner"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(banner._id, banner.title)}
-                          className={`p-2 rounded-lg ${colors.bgSecondary} border ${colors.border} text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/40 transition-colors`}
-                          title="Delete Banner"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
@@ -537,4 +678,3 @@ const UpcomingBanners = () => {
 };
 
 export default UpcomingBanners;
-

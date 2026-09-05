@@ -19,6 +19,7 @@ import Contact from '../pages/Contact';
 import Login from '../pages/Login';
 import Services from '../pages/Services';
 import ServiceDetail from '../pages/ServiceDetail';
+import Banners from '../pages/Banners';
 
 // User account pages
 import Orders from '../pages/Account/Orders';
@@ -123,6 +124,7 @@ const AppRouter = () => {
       <Route path="/contact" element={<StorefrontLayout><Contact /></StorefrontLayout>} />
       <Route path="/services" element={<StorefrontLayout><Services /></StorefrontLayout>} />
       <Route path="/services/:slug" element={<StorefrontLayout><ServiceDetail /></StorefrontLayout>} />
+      <Route path="/banner" element={<StorefrontLayout><Banners /></StorefrontLayout>} />
       <Route path="/login" element={<StorefrontLayout><Login /></StorefrontLayout>} />
       
       {/* Protected Customer Routes */}

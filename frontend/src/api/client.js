@@ -1,8 +1,14 @@
 import axios from 'axios';
 import { classifyError } from '../utils/errorClassifier';
 
-// Connect to backend (Defaulting to localhost:5000 in development)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+// Backend API base URL.
+// - Local dev: set VITE_API_BASE_URL=http://localhost:5000 in .env
+// - Production: set VITE_API_BASE_URL=https://superui-lanch-backend.onrender.com in Vercel env
+// We never fall back to localhost:5000 in production builds to prevent Chrome's
+// "local network access" permission prompt on superui.in.
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://superui-lanch-backend.onrender.com' : 'http://localhost:5000');
 
 const client = axios.create({
   baseURL: `${API_BASE_URL}`,

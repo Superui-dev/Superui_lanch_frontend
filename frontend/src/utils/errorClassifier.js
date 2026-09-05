@@ -79,7 +79,7 @@ export function classifyError(err) {
     severity = ERROR_SEVERITIES.CRITICAL;
     code = 'ERR_CORS_BLOCKED';
     userMessage = 'Cross-Origin Request Blocked by browser security policy.';
-    suggestedFix = 'Add your frontend domain (e.g. http://localhost:5173) to process.env.ALLOWED_ORIGINS in the backend app.js cors options.';
+    suggestedFix = 'Add your frontend domain (e.g. https://superui.in) to process.env.ALLOWED_ORIGINS in the backend app.js cors options.';
   }
   // 2. HTTP Status Code Errors
   else if (httpStatus) {

@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { ShoppingBag, X } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  (import.meta.env.PROD ? 'https://superui-lanch-backend.onrender.com' : 'http://localhost:5000');
 
 // Global audio helper to trigger a soft notification tap chime
 const playSoftChime = () => {
