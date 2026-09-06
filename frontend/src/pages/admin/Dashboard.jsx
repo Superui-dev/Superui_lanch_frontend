@@ -16,7 +16,7 @@ const SOCKET_URL =
 
 const Dashboard = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   
   const [stats, setStats] = useState({
     totalSales: 0,
@@ -238,9 +238,12 @@ const Dashboard = () => {
          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
            <div>
              <h1 className={`text-2xl font-bold ${colors.text}`}>Dashboard Overview</h1>
-             <p className={`text-xs ${colors.textMuted} mt-1`}>
-               Showing real-time database orders, revenue metrics, and system report analytics for {selectedDate}
-             </p>
+              <p className={`text-xs ${colors.textMuted} mt-1`}>
+                Showing real-time database orders, revenue metrics, and system report analytics{' '}
+                {dateRange.start && dateRange.end
+                  ? `for ${new Date(dateRange.start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(dateRange.end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  : 'for all time'}
+              </p>
            </div>
          </header>
 

@@ -11,7 +11,7 @@ import {
 
 const Bookings = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [bookings, setBookings] = useState([]);
@@ -23,7 +23,6 @@ const Bookings = () => {
   const [verifyCode, setVerifyCode] = useState('');
   const [verifyNotes, setVerifyNotes] = useState('');
   const [verifying, setVerifying] = useState(false);
-  const [selectedDateStr, setSelectedDateStr] = useState('');
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -31,7 +30,8 @@ const Bookings = () => {
       const params = new URLSearchParams();
       if (viewMode === '5day') params.set('view', '5day');
       if (statusFilter !== 'all') params.set('status', statusFilter);
-      if (selectedDateStr) params.set('date', selectedDateStr);
+      if (dateRange.start) params.set('startDate', dateRange.start);
+      if (dateRange.end) params.set('endDate', dateRange.end);
       const res = await client.get(`/api/admin/bookings?${params.toString()}`);
       if (res.data?.success && Array.isArray(res.data.data)) {
         setBookings(res.data.data);
@@ -48,7 +48,7 @@ const Bookings = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [viewMode, statusFilter, selectedDateStr]);
+  }, [viewMode, statusFilter, dateRange.start, dateRange.end]);
 
   const filteredBookings = useMemo(() => {
     if (!searchQuery.trim()) return bookings;
@@ -75,10 +75,14 @@ const Bookings = () => {
       end.setDate(today.getDate() + 4);
       return `${today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     }
-    return selectedDateStr
-      ? new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-      : 'All Dates';
-  }, [viewMode, selectedDateStr]);
+    if (dateRange.start && dateRange.end) {
+      if (dateRange.start === dateRange.end) {
+        return new Date(dateRange.start + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      }
+      return `${new Date(dateRange.start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(dateRange.end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    return 'All Dates';
+  }, [viewMode, dateRange.start, dateRange.end]);
 
   const stats = useMemo(() => {
     const total = bookings.length;
@@ -137,15 +141,11 @@ const Bookings = () => {
   };
 
   const shiftDay = (direction) => {
-    if (!selectedDateStr) {
-      const today = new Date();
-      today.setDate(today.getDate() + direction);
-      setSelectedDateStr(today.toISOString().split('T')[0]);
-      return;
-    }
-    const d = new Date(selectedDateStr + 'T00:00:00');
+    const current = dateRange.start || new Date().toISOString().split('T')[0];
+    const d = new Date(current + 'T00:00:00');
     d.setDate(d.getDate() + direction);
-    setSelectedDateStr(d.toISOString().split('T')[0]);
+    const newDate = d.toISOString().split('T')[0];
+    setDateRange({ start: newDate, end: newDate });
   };
 
   return (

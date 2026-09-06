@@ -9,7 +9,7 @@ import { Mail, Trash2, ShieldCheck, Clock, Reply, X, Inbox, Loader2 } from 'luci
 
 const Contacts = () => {
   const { colors } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -70,12 +70,12 @@ const Contacts = () => {
   };
 
   const filteredMessages = useMemo(() => {
-    if (!selectedDate) return messages;
+    if (!dateRange.start && !dateRange.end) return messages;
     return messages.filter(m => {
       const createdDate = new Date(m.createdAt || m.date).toISOString().split('T')[0];
-      return createdDate === selectedDate;
+      return (!dateRange.start || createdDate >= dateRange.start) && (!dateRange.end || createdDate <= dateRange.end);
     });
-  }, [messages, selectedDate]);
+  }, [messages, dateRange]);
 
   const paginatedMessages = useMemo(() => {
     return filteredMessages.slice(

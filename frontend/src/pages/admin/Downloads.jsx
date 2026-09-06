@@ -9,7 +9,7 @@ import { Download, AlertCircle, ShieldAlert, Globe, Monitor, Loader2, Inbox } fr
 
 const Downloads = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,14 +74,15 @@ const Downloads = () => {
   const totalDownloads = tokens.reduce((sum, t) => sum + t.downloadCount, 0);
 
   const filteredTokens = useMemo(() => {
-    if (!selectedDate) return tokens;
+    if (!dateRange.start && !dateRange.end) return tokens;
     return tokens.filter(t => {
       if (t.downloadedAt) {
-        return new Date(t.downloadedAt).toISOString().split('T')[0] === selectedDate;
+        const downloadedDate = new Date(t.downloadedAt).toISOString().split('T')[0];
+        return (!dateRange.start || downloadedDate >= dateRange.start) && (!dateRange.end || downloadedDate <= dateRange.end);
       }
       return true;
     });
-  }, [tokens, selectedDate]);
+  }, [tokens, dateRange]);
 
   const paginatedTokens = useMemo(() => {
     return filteredTokens.slice(
@@ -167,7 +168,15 @@ const Downloads = () => {
                   <tr>
                     <td colSpan={6} className="py-12 text-center">
                       <Inbox className={`h-10 w-10 mx-auto ${colors.textMuted} mb-2`} />
-                      <p className={`text-sm ${colors.textSecondary} font-medium`}>No download logs found for {selectedDate}</p>
+                       <p className={`text-sm ${colors.textSecondary} font-medium`}>
+                        {dateRange.start && dateRange.end
+                          ? `No download logs found for ${dateRange.start} to ${dateRange.end}`
+                          : dateRange.start
+                            ? `No download logs found from ${dateRange.start}`
+                            : dateRange.end
+                              ? `No download logs found up to ${dateRange.end}`
+                              : 'No download logs found'}
+                      </p>
                     </td>
                   </tr>
                 ) : (

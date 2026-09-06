@@ -9,7 +9,7 @@ import { Users, Ban, ShieldCheck, Mail, Calendar, Inbox, Search, RefreshCw, Shop
 
 const Customers = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -69,14 +69,14 @@ const Customers = () => {
 
       // Date filter
       let matchesDate = true;
-      if (selectedDate && c.createdAt) {
+      if (dateRange.start || dateRange.end) {
         const createdDate = new Date(c.createdAt).toISOString().split('T')[0];
-        matchesDate = createdDate === selectedDate;
+        matchesDate = (!dateRange.start || createdDate >= dateRange.start) && (!dateRange.end || createdDate <= dateRange.end);
       }
 
       return matchesSearch && matchesDate;
     });
-  }, [customers, searchQuery, selectedDate]);
+  }, [customers, searchQuery, dateRange]);
 
   const paginatedCustomers = useMemo(() => {
     return filteredCustomers.slice(
@@ -156,9 +156,9 @@ const Customers = () => {
                   <tr>
                     <td colSpan={6} className="py-12 text-center">
                       <Inbox className={`h-10 w-10 mx-auto ${colors.textMuted} mb-2`} />
-                      <p className={`text-sm ${colors.textSecondary} font-medium`}>
-                        {searchQuery || selectedDate ? 'No customers found matching search/date criteria' : 'No registered customers found'}
-                      </p>
+                        <p className={`text-sm ${colors.textSecondary} font-medium`}>
+                          {searchQuery || (dateRange.start || dateRange.end) ? 'No customers found matching search/date criteria' : 'No registered customers found'}
+                        </p>
                     </td>
                   </tr>
                 ) : (

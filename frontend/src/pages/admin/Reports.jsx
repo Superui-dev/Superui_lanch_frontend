@@ -9,7 +9,7 @@ import { TrendingUp, Award, ShoppingCart, Loader2, Inbox } from 'lucide-react';
 
 const Reports = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -19,7 +19,10 @@ const Reports = () => {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await client.get('/api/admin/analytics/summary');
+      const params = new URLSearchParams();
+      if (dateRange.start) params.set('startDate', dateRange.start);
+      if (dateRange.end) params.set('endDate', dateRange.end);
+      const res = await client.get(`/api/admin/analytics/summary?${params.toString()}`);
       if (res.data?.success && Array.isArray(res.data?.data?.productsPerformance)) {
         setTopProducts(res.data.data.productsPerformance);
       } else {
@@ -31,7 +34,7 @@ const Reports = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateRange.start, dateRange.end]);
 
   useEffect(() => {
     fetchReports();
@@ -66,7 +69,12 @@ const Reports = () => {
               <TrendingUp className="h-6 w-6 text-brand-500" />
               <span>Sales & Analytics Reports</span>
             </h1>
-            <p className={`${colors.textSecondary} text-sm mt-1`}>Top performing products and revenue analytics for {selectedDate}.</p>
+             <p className={`${colors.textSecondary} text-sm mt-1`}>
+               Top performing products and revenue analytics{' '}
+               {dateRange.start && dateRange.end
+                 ? `for ${new Date(dateRange.start + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(dateRange.end + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                 : 'for all time'}
+             </p>
           </div>
 
           <AdminDatePicker label="Report Date" />

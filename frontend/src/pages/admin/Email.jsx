@@ -10,7 +10,7 @@ import client from '../../api/client';
 
 const Email = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [transports, setTransports] = useState([
@@ -39,7 +39,7 @@ const Email = () => {
 
   const fetchEmailConfig = useCallback(async () => {
     try {
-      const dateParam = selectedDate ? `?date=${selectedDate}` : '';
+      const dateParam = (dateRange.start || dateRange.end) ? `?start=${dateRange.start}&end=${dateRange.end}` : '';
       const [configRes, logsRes] = await Promise.allSettled([
         client.get(`/api/admin/email/config-status${dateParam}`, { silent: true }),
         client.get('/api/admin/email/logs', { silent: true })
@@ -80,7 +80,7 @@ const Email = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedDate]);
+  }, [dateRange]);
 
   useEffect(() => {
     fetchEmailConfig();
@@ -176,9 +176,12 @@ const Email = () => {
   const totalEmailLimit = transports.reduce((sum, t) => sum + (t.limit || 100), 0);
 
   const filteredLogs = useMemo(() => {
-    if (!selectedDate) return logs;
-    return logs.filter(log => new Date(log.date).toISOString().split('T')[0] === selectedDate);
-  }, [logs, selectedDate]);
+    if (!dateRange.start && !dateRange.end) return logs;
+    return logs.filter(log => {
+      const logDate = new Date(log.date).toISOString().split('T')[0];
+      return (!dateRange.start || logDate >= dateRange.start) && (!dateRange.end || logDate <= dateRange.end);
+    });
+  }, [logs, dateRange]);
 
   return (
     <AdminLayout>

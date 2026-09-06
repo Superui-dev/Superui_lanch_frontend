@@ -11,7 +11,7 @@ import {
 
 const VisitorsReport = () => {
   const { colors, isLight } = useAdminTheme();
-  const { selectedDate } = useAdminDate();
+  const { dateRange } = useAdminDate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,8 +21,10 @@ const VisitorsReport = () => {
     setLoading(true);
     setError('');
     try {
-      const dateParam = selectedDate ? `?date=${selectedDate}` : '';
-      const res = await client.get(`/api/admin/analytics/visitors${dateParam}`);
+      const params = new URLSearchParams();
+      if (dateRange.start) params.set('startDate', dateRange.start);
+      if (dateRange.end) params.set('endDate', dateRange.end);
+      const res = await client.get(`/api/admin/analytics/visitors?${params.toString()}`);
       if (res.data?.success && res.data?.data) {
         setData(res.data.data);
       } else {
@@ -33,7 +35,7 @@ const VisitorsReport = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedDate]);
+  }, [dateRange.start, dateRange.end]);
 
   useEffect(() => {
     fetchReport();
