@@ -54,7 +54,7 @@ const Navbar = () => {
     : [
         { label: 'Home', url: '/' },
         { label: 'Products', url: '/products' },
-        { label: 'Portfolio', url: '/portfolio' },
+        // { label: 'Portfolio', url: '/portfolio' },
         { label: 'Contact', url: '/contact' }
       ];
 
