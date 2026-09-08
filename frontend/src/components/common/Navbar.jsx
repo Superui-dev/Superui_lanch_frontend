@@ -105,7 +105,7 @@ const Navbar = () => {
               )}
               {/* Watchlist Icon with badge */}
               {/* Watchlist Icon with badge */}
-              <button
+              {/* <button
                 onClick={() => {
                   if (!user) {
                     openAuthModal('login');
@@ -122,7 +122,7 @@ const Navbar = () => {
                     {watchlistItems.length}
                   </span>
                 )}
-              </button>
+              </button> */}
 
               {/* Cart Icon with badge */}
               {user && (
